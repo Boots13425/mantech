@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MANTech - Dashboard</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="header-logo">
+                    <span>◆</span>
+                    <span>MANTech</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span class="user-name" id="userName">Admin User</span>
+                    <span class="user-role">Management</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <main class="dashboard-main">
+            <section class="welcome-section">
+                <h1 class="welcome-title">Welcome to MANTech</h1>
+                <p class="welcome-subtitle">ETS NTECH Intern Management System - Manage all your operations from here</p>
+            </section>
+
+            <section class="menu-grid">
+                <!-- Intern Registration -->
+                <div class="menu-card" onclick="navigateTo('/interns')">
+                    <div class="menu-icon">👥</div>
+                    <h3 class="menu-title">Intern Registration</h3>
+                    <p class="menu-description">Register new interns, manage their information, and generate receipts automatically.</p>
+                </div>
+
+                <!-- Attendance -->
+                <div class="menu-card" onclick="navigateTo('/attendance')">
+                    <div class="menu-icon">📋</div>
+                    <h3 class="menu-title">Attendance Management</h3>
+                    <p class="menu-description">Track intern attendance and export comprehensive attendance lists in Excel format.</p>
+                </div>
+
+                <!-- Event Planning -->
+                <div class="menu-card" onclick="navigateTo('/events')">
+                    <div class="menu-icon">📅</div>
+                    <h3 class="menu-title">Event Planning</h3>
+                    <p class="menu-description">Plan company events, get recommendations, and manage event details efficiently.</p>
+                </div>
+
+                <!-- Budget Management -->
+                <div class="menu-card" onclick="navigateTo('/budget')">
+                    <div class="menu-icon">💰</div>
+                    <h3 class="menu-title">Budget Management</h3>
+                    <p class="menu-description">View budget statistics, track expenses, and manage company financial data.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="./js/dashboard.js"></script>
+</body>
+</html>
