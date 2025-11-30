@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MANTech - Admin Login</title>
+    <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">
+                    <span class="logo-icon">◆</span>
+                    <h1>MANTech</h1>
+                </div>
+                <p class="subtitle">ETS NTECH Management System</p>
+            </div>
+
+            <form id="loginForm" class="login-form">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email" 
+                        placeholder="admin@ets-ntech.org"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password" 
+                        placeholder="Enter your password"
+                        required
+                    >
+                    <button type="button" class="show-password-btn" onclick="togglePassword()">
+                        <span id="toggleText">Show</span>
+                    </button>
+                </div>
+
+                <button type="submit" class="login-btn">Sign In</button>
+            </form>
+
+            <div id="errorMessage" class="error-message"></div>
+
+            <p class="security-note">
+                <span class="lock-icon">🔒</span>
+                Secure login with encrypted session management
+            </p>
+        </div>
+
+        <div class="login-background">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+        </div>
+    </div>
+
+    <script src="./js/login.js"></script>
+</body>
+</html>
