@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management - MANTech</title>
+    <link rel="stylesheet" href="css/attendance.css">
+</head>
+<body>
+    <div class="attendance-container">
+        <!-- Header -->
+        <div class="attendance-header">
+            <button class="back-btn" onclick="goBack()">
+                <span>←</span> Back to Dashboard
+            </button>
+            <h1>Attendance Management</h1>
+            <p class="header-subtitle">Mark interns present or absent and export to Excel</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="attendance-controls">
+            <div class="date-picker-group">
+                <label for="attendance-date">Select Date:</label>
+                <input type="date" id="attendance-date" />
+            </div>
+            <button class="btn-export" onclick="exportToExcel()">
+                <span>📥</span> Export to Excel
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading attendance data...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="error-message" style="display: none;"></div>
+
+        <!-- Attendance List -->
+        <div class="attendance-list-wrapper">
+            <table class="attendance-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Intern Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="attendance-tbody">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="empty-state" style="display: none;">
+            <p>No interns found in the system</p>
+        </div>
+
+        <!-- Success Modal -->
+        <div id="success-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header success">
+                    <h2>Success</h2>
+                </div>
+                <p id="success-message"></p>
+                <button class="btn-primary" onclick="closeModal('success-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/attendance.js"></script>
+</body>
+</html>
