@@ -109,6 +109,7 @@ router.post("/register-intern", async (req, res) => {
     // Use a connection from the pool to query/insert into MySQL
     const connection = await pool.getConnection()
     let internData
+
     try {
       // Check if intern already registered with this email
       const [existingRows] = await connection.query('SELECT id FROM interns WHERE email = ?', [email])
@@ -153,6 +154,22 @@ router.post("/register-intern", async (req, res) => {
       )
 
       internData = rows[0]
+    } catch (dbError) {
+      try {
+        connection.release()
+      } catch (releaseError) {
+        console.error('Connection release error:', releaseError)
+      }
+
+      // Handle duplicate email entry gracefully (race condition)
+      if (dbError.code === 'ER_DUP_ENTRY' && dbError.sqlMessage && dbError.sqlMessage.includes('email')) {
+        return res.status(400).json({
+          message: 'An intern with this email is already registered.',
+        })
+      }
+
+      // Re-throw other database errors
+      throw dbError
     } finally {
       try {
         connection.release()

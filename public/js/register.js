@@ -1,7 +1,13 @@
 // Form Submission and Validation
+let isSubmitting = false
 
 async function handleFormSubmit(event) {
   event.preventDefault()
+
+  // Prevent double submission
+  if (isSubmitting) {
+    return
+  }
 
   console.log('handleFormSubmit called')
 
@@ -36,6 +42,7 @@ async function handleFormSubmit(event) {
   const submitBtnText = document.getElementById("submitBtnText")
   const submitSpinner = document.getElementById("submitSpinner")
 
+  isSubmitting = true
   submitBtn.disabled = true
   submitBtnText.style.display = "none"
   submitSpinner.style.display = "block"
@@ -67,6 +74,7 @@ async function handleFormSubmit(event) {
     showErrorModal("An error occurred. Please check your connection and try again.")
   } finally {
     // Reset button state
+    isSubmitting = false
     submitBtn.disabled = false
     submitBtnText.style.display = "inline"
     submitSpinner.style.display = "none"
