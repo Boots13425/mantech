@@ -52,6 +52,9 @@ const internRegistrationRouter = require("./routes/intern-registration")
 
 app.use("/api", internRegistrationRouter)
 
+const attendanceRouter = require("./routes/attendance")
+
+app.use("/api/attendance", attendanceRouter)
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
