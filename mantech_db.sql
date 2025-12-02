@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Dec 02, 2025 at 10:09 AM
+-- Generation Time: Dec 02, 2025 at 10:50 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.0.25
 
@@ -86,15 +86,25 @@ CREATE TABLE `interns` (
   `registration_date` date NOT NULL,
   `status` enum('active','inactive','completed') DEFAULT 'active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `school` varchar(255) DEFAULT NULL,
+  `degree` varchar(255) DEFAULT NULL,
+  `year_of_study` varchar(50) DEFAULT NULL,
+  `gpa` decimal(3,2) DEFAULT NULL,
+  `department` varchar(255) DEFAULT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `mentor` varchar(255) DEFAULT NULL,
+  `skills` text DEFAULT NULL,
+  `notes` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `interns`
 --
 
-INSERT INTO `interns` (`id`, `first_name`, `last_name`, `email`, `phone`, `date_of_birth`, `registration_date`, `status`, `created_at`, `updated_at`) VALUES
-(1, 'tester', 'test', 'tester@gmail.com', '+237612345678', '2005-03-15', '2025-11-30', 'active', '2025-11-30 10:12:53', '2025-11-30 10:12:53');
+INSERT INTO `interns` (`id`, `first_name`, `last_name`, `email`, `phone`, `date_of_birth`, `registration_date`, `status`, `created_at`, `updated_at`, `school`, `degree`, `year_of_study`, `gpa`, `department`, `start_date`, `end_date`, `mentor`, `skills`, `notes`) VALUES
+(10, 'test', 'shield', 'fongongserge21@gmail.com', '+237680600811', NULL, '2025-12-02', 'active', '2025-12-02 09:35:10', '2025-12-02 09:35:10', 'FET', 'bachelors in computer engineering', '3rd Year', NULL, 'Software Development', '2025-12-09', '2025-12-16', NULL, 'balling', NULL);
 
 -- --------------------------------------------------------
 
@@ -188,7 +198,7 @@ ALTER TABLE `events`
 -- AUTO_INCREMENT for table `interns`
 --
 ALTER TABLE `interns`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `users`
