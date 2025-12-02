@@ -36,6 +36,7 @@ const pool = mysql.createPool({
     queueLimit: 0
 });
 
+
 // Middleware to check authentication
 const requireAuth = (req, res, next) => {
     if (!req.session.userId) {
@@ -44,7 +45,12 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
+
 // ==================== API ROUTES ====================
+
+const internRegistrationRouter = require("./routes/intern-registration")
+
+app.use("/api", internRegistrationRouter)
 
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
@@ -136,6 +142,7 @@ app.use((err, req, res, next) => {
     console.error('Error:', err);
     res.status(500).json({ message: 'Server error' });
 });
+
 
 // ==================== SERVER START ====================
 

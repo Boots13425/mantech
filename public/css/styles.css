@@ -42,10 +42,8 @@ body {
     -moz-osx-font-smoothing: grayscale;
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    /* allow page scrolling by default */
+    overflow-y: auto;
 }
 
 .login-container {
@@ -54,6 +52,11 @@ body {
     max-width: 420px;
     padding: 20px;
     z-index: 10;
+    /* center the login card vertically within viewport without preventing page scroll */
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .login-card {
@@ -496,4 +499,8 @@ body {
         padding: 12px 16px;
         font-size: 13px;
     }
+}
+
+.nav-item{
+    text-decoration: none;
 }

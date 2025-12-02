@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Intern - MANTech</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/register.css">
+</head>
+<body>
+    <div class="register-container">
+        <!-- Header with Back Button -->
+        <div class="register-header">
+            <button class="back-btn" onclick="goBackToDashboard()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Dashboard
+            </button>
+            <h1>Intern Registration</h1>
+            <div class="header-subtitle">Complete all fields to register a new intern</div>
+        </div>
+
+        <!-- Main Form Container -->
+        <div class="register-form-wrapper">
+            <form id="registrationForm" class="registration-form" onsubmit="handleFormSubmit(event)">
+                
+                <!-- Personal Information Section -->
+                <div class="form-section">
+                    <h2 class="section-title">Personal Information</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name *</label>
+                            <input type="text" id="firstName" name="firstName" required placeholder="Enter first name">
+                            <span class="error-message" id="firstNameError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name *</label>
+                            <input type="text" id="lastName" name="lastName" required placeholder="Enter last name">
+                            <span class="error-message" id="lastNameError"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required placeholder="Enter email address">
+                        <span class="error-message" id="emailError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" required placeholder="Enter phone number">
+                        <span class="error-message" id="phoneError"></span>
+                    </div>
+                </div>
+
+                <!-- Education Information Section -->
+                <div class="form-section">
+                    <h2 class="section-title">Education Information</h2>
+                    
+                    <div class="form-group">
+                        <label for="school">School/University *</label>
+                        <input type="text" id="school" name="school" required placeholder="Enter school or university name">
+                        <span class="error-message" id="schoolError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="degree">Degree Program *</label>
+                        <input type="text" id="degree" name="degree" required placeholder="e.g., Bachelor of Science in Computer Science">
+                        <span class="error-message" id="degreeError"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="yearOfStudy">Year of Study *</label>
+                            <select id="yearOfStudy" name="yearOfStudy" required>
+                                <option value="">Select year</option>
+                                <option value="1st Year">1st Year</option>
+                                <option value="2nd Year">2nd Year</option>
+                                <option value="3rd Year">3rd Year</option>
+                                <option value="4th Year">4th Year</option>
+                                <option value="Masters">Masters</option>
+                            </select>
+                            <span class="error-message" id="yearOfStudyError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="gpa">GPA (Optional)</label>
+                            <input type="number" id="gpa" name="gpa" min="0" max="4" step="0.01" placeholder="e.g., 3.5">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Internship Details Section -->
+                <div class="form-section">
+                    <h2 class="section-title">Internship Details</h2>
+                    
+                    <div class="form-group">
+                        <label for="department">Department *</label>
+                        <select id="department" name="department" required>
+                            <option value="">Select department</option>
+                            <option value="Software Development">Software Development</option>
+                            <option value="Network Administration">Network Administration</option>
+                            <option value="Database Management">Database Management</option>
+                            <option value="IT Support">IT Support</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <span class="error-message" id="departmentError"></span>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate">Start Date *</label>
+                            <input type="date" id="startDate" name="startDate" required>
+                            <span class="error-message" id="startDateError"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">End Date *</label>
+                            <input type="date" id="endDate" name="endDate" required>
+                            <span class="error-message" id="endDateError"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mentor">Assigned Mentor (Optional)</label>
+                        <input type="text" id="mentor" name="mentor" placeholder="Mentor name">
+                    </div>
+                </div>
+
+                <!-- Additional Information Section -->
+                <div class="form-section">
+                    <h2 class="section-title">Additional Information</h2>
+                    
+                    <div class="form-group">
+                        <label for="skills">Skills & Interests *</label>
+                        <textarea id="skills" name="skills" required placeholder="List relevant skills and areas of interest (comma-separated)"></textarea>
+                        <span class="error-message" id="skillsError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Additional Notes (Optional)</label>
+                        <textarea id="notes" name="notes" placeholder="Any additional information..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="resetForm()">Reset Form</button>
+                    <button type="submit" class="btn-primary" id="submitBtn">
+                        <span id="submitBtnText">Register Intern</span>
+                        <div class="spinner" id="submitSpinner" style="display: none;"></div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content success">
+            <div class="modal-header">
+                <svg class="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                <h2>Registration Successful!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Intern has been successfully registered. A receipt has been sent to their email address.</p>
+                <div class="success-details">
+                    <p><strong>Name:</strong> <span id="successName"></span></p>
+                    <p><strong>Email:</strong> <span id="successEmail"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="closeSuccessModal()">Register Another Intern</button>
+                <button class="btn-secondary" onclick="goBackToDashboard()">Back to Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal" id="errorModal">
+        <div class="modal-content error">
+            <div class="modal-header">
+                <svg class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <h2>Registration Failed</h2>
+            </div>
+            <div class="modal-body">
+                <p id="errorMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="closeErrorModal()">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/register.js"></script>
+</body>
+</html>
