@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Dec 02, 2025 at 10:50 PM
+-- Generation Time: Dec 06, 2025 at 10:22 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.0.25
 
@@ -104,7 +104,71 @@ CREATE TABLE `interns` (
 --
 
 INSERT INTO `interns` (`id`, `first_name`, `last_name`, `email`, `phone`, `date_of_birth`, `registration_date`, `status`, `created_at`, `updated_at`, `school`, `degree`, `year_of_study`, `gpa`, `department`, `start_date`, `end_date`, `mentor`, `skills`, `notes`) VALUES
-(10, 'test', 'shield', 'fongongserge21@gmail.com', '+237680600811', NULL, '2025-12-02', 'active', '2025-12-02 09:35:10', '2025-12-02 09:35:10', 'FET', 'bachelors in computer engineering', '3rd Year', NULL, 'Software Development', '2025-12-09', '2025-12-16', NULL, 'balling', NULL);
+(10, 'test', 'shield', 'fongongserge21@gmail.com', '+237680600811', NULL, '2025-12-02', 'active', '2025-12-02 09:35:10', '2025-12-02 09:35:10', 'FET', 'bachelors in computer engineering', '3rd Year', NULL, 'Software Development', '2025-12-09', '2025-12-16', NULL, 'balling', NULL),
+(11, 'lemuel', 'fineboy', 'lemuelmbunwe@gmail.com', '+237680600811', NULL, '2025-12-04', 'active', '2025-12-04 15:56:37', '2025-12-04 15:56:37', 'FET', 'bachelors in computer engineering', '3rd Year', NULL, 'Software Development', '2025-12-11', '2025-12-25', NULL, 'dancing', 'he lied about his skill'),
+(12, 'fong', 'serg', 'serge@gmail.com', '680600811', NULL, '2025-12-06', 'active', '2025-12-06 08:28:03', '2025-12-06 08:28:03', 'FET', 'bachelors in computer engineering', '4th Year', NULL, 'Network Administration', '2025-12-07', '2025-12-16', NULL, 'talking', NULL),
+(13, 'sergio rakitin', 'kitchens', 'nwantolyben@gmail.com', '237678366438', NULL, '2025-12-06', 'active', '2025-12-06 09:41:49', '2025-12-06 09:41:49', 'FET', 'bachelors in computer engineering', '3rd Year', '1.65', 'Software Development', '2025-12-06', '2026-07-06', 'Lemuel Fineboy', 'nothing', 'nothing');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `receipts`
+--
+
+CREATE TABLE `receipts` (
+  `id` int(11) NOT NULL,
+  `receipt_id` varchar(50) NOT NULL,
+  `intern_id` int(11) NOT NULL,
+  `payment_date` date NOT NULL,
+  `payment_type` varchar(50) NOT NULL,
+  `fee_type_description` varchar(255) DEFAULT NULL,
+  `payment_description` varchar(255) DEFAULT NULL,
+  `amount_due` decimal(10,2) NOT NULL,
+  `amount_paid` decimal(10,2) NOT NULL,
+  `balance` decimal(10,2) GENERATED ALWAYS AS (`amount_due` - `amount_paid`) STORED,
+  `payment_method` varchar(50) NOT NULL,
+  `received_by` varchar(100) NOT NULL,
+  `notes` text DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'Active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `created_by` int(11) NOT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `void_reason` varchar(255) DEFAULT NULL,
+  `voided_at` timestamp NULL DEFAULT NULL,
+  `voided_by` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `receipts`
+--
+
+INSERT INTO `receipts` (`id`, `receipt_id`, `intern_id`, `payment_date`, `payment_type`, `fee_type_description`, `payment_description`, `amount_due`, `amount_paid`, `payment_method`, `received_by`, `notes`, `status`, `created_at`, `created_by`, `updated_at`, `void_reason`, `voided_at`, `voided_by`) VALUES
+(1, 'ETS/2025/12/001', 11, '2025-12-05', 'Registration Fee', NULL, NULL, '5000.00', '5000.00', 'Mobile Money', 'Admin', NULL, 'Active', '2025-12-06 20:28:59', 1, '2025-12-06 21:11:45', NULL, NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `receipt_audit_logs`
+--
+
+CREATE TABLE `receipt_audit_logs` (
+  `id` int(11) NOT NULL,
+  `receipt_id` int(11) NOT NULL,
+  `action` varchar(50) NOT NULL,
+  `action_by` int(11) NOT NULL,
+  `action_timestamp` timestamp NOT NULL DEFAULT current_timestamp(),
+  `old_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`old_values`)),
+  `new_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`new_values`)),
+  `notes` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `receipt_audit_logs`
+--
+
+INSERT INTO `receipt_audit_logs` (`id`, `receipt_id`, `action`, `action_by`, `action_timestamp`, `old_values`, `new_values`, `notes`) VALUES
+(1, 1, 'CREATE', 1, '2025-12-06 20:28:59', NULL, '{\"receipt_id\":\"ETS/2025/12/001\",\"amount_due\":5000,\"amount_paid\":4000}', NULL),
+(2, 1, 'UPDATE', 1, '2025-12-06 21:11:45', '{\"amount_due\": \"5000.00\", \"amount_paid\": \"4000.00\"}', '{\"amount_due\": 5000, \"amount_paid\": 5000}', NULL);
 
 -- --------------------------------------------------------
 
@@ -165,6 +229,28 @@ ALTER TABLE `interns`
   ADD KEY `idx_status` (`status`);
 
 --
+-- Indexes for table `receipts`
+--
+ALTER TABLE `receipts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `receipt_id` (`receipt_id`),
+  ADD KEY `created_by` (`created_by`),
+  ADD KEY `voided_by` (`voided_by`),
+  ADD KEY `idx_receipt_id` (`receipt_id`),
+  ADD KEY `idx_intern_id` (`intern_id`),
+  ADD KEY `idx_payment_date` (`payment_date`),
+  ADD KEY `idx_status` (`status`);
+
+--
+-- Indexes for table `receipt_audit_logs`
+--
+ALTER TABLE `receipt_audit_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `action_by` (`action_by`),
+  ADD KEY `idx_receipt_id` (`receipt_id`),
+  ADD KEY `idx_action_timestamp` (`action_timestamp`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -198,7 +284,19 @@ ALTER TABLE `events`
 -- AUTO_INCREMENT for table `interns`
 --
 ALTER TABLE `interns`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `receipts`
+--
+ALTER TABLE `receipts`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `receipt_audit_logs`
+--
+ALTER TABLE `receipt_audit_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -215,6 +313,21 @@ ALTER TABLE `users`
 --
 ALTER TABLE `attendance`
   ADD CONSTRAINT `attendance_ibfk_1` FOREIGN KEY (`intern_id`) REFERENCES `interns` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `receipts`
+--
+ALTER TABLE `receipts`
+  ADD CONSTRAINT `receipts_ibfk_1` FOREIGN KEY (`intern_id`) REFERENCES `interns` (`id`),
+  ADD CONSTRAINT `receipts_ibfk_2` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`),
+  ADD CONSTRAINT `receipts_ibfk_3` FOREIGN KEY (`voided_by`) REFERENCES `users` (`id`);
+
+--
+-- Constraints for table `receipt_audit_logs`
+--
+ALTER TABLE `receipt_audit_logs`
+  ADD CONSTRAINT `receipt_audit_logs_ibfk_1` FOREIGN KEY (`receipt_id`) REFERENCES `receipts` (`id`),
+  ADD CONSTRAINT `receipt_audit_logs_ibfk_2` FOREIGN KEY (`action_by`) REFERENCES `users` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
