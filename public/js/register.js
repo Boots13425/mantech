@@ -101,7 +101,7 @@ function validateForm(data) {
   }
 
   // Phone validation
-  if (!data.phone || data.phone.length < 10) {
+  if (!data.phone || data.phone.length < 9) {
     errors.phone = "Please enter a valid phone number"
   }
 

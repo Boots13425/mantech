@@ -37,7 +37,7 @@ function isValidEmail(email) {
 
 // Validate phone format
 function isValidPhone(phone) {
-  const phoneRegex = /^\d{10,}$/
+  const phoneRegex = /^\d{9,}$/
   return phoneRegex.test(phone.replace(/\D/g, ""))
 }
 
@@ -295,7 +295,7 @@ async function generateReceiptPDF(internData) {
         .fontSize(9)
         .font("Helvetica")
         .text(
-          "Welcome to Enterprise Technology Solutions! We are excited to have you join our team as an intern. This receipt confirms your registration and marks the beginning of your internship journey with us.\n\nYou will have access to world-class mentoring, hands-on experience, and exposure to real-world technology challenges. We look forward to your contributions and growth during this period.\n\nIf you have any questions or need assistance, please do not hesitate to reach out to your assigned mentor or the HR department.",
+          "Welcome to Enterprise Network Technology! We are excited to have you join our team as an intern. This receipt confirms your registration and marks the beginning of your internship journey with us.\n\nYou will have access to world-class mentoring, hands-on experience, and exposure to real-world technology challenges. We look forward to your contributions and growth during this period.\n\nIf you have any questions or need assistance, please do not hesitate to reach out to your assigned mentor or the HR department.",
           40,
           messageY + 35,
           { width: 515, align: "left" },
@@ -338,7 +338,7 @@ async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
                     <h1 style="margin: 0; font-size: 28px;">Welcome to ETS NTECH</h1>
-                    <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Enterprise Technology Solutions</p>
+                    <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">Enterprise Network Technology </p>
                 </div>
                 
                 <div style="background: white; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e2e8f0;">
@@ -347,19 +347,19 @@ async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
                     </p>
                     
                     <p style="color: #4a5568; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0;">
-                        We are thrilled to confirm your internship registration with Enterprise Technology Solutions (ETS NTECH). This is the beginning of an exciting journey where you'll gain practical experience, work with innovative technologies, and contribute to real-world projects.
+                        We are delighted to confirm your internship registration with Enterprise Network Technology (ETS NTECH). This is the beginning of an exciting journey where you'll gain practical experience, work with innovative technologies, and contribute to real-world projects.
                     </p>
                     
                     <div style="background: #f0fff4; border-left: 4px solid #48bb78; padding: 15px; margin: 20px 0; border-radius: 4px;">
                         <p style="color: #22543d; font-size: 14px; margin: 0;">
-                            <strong>Your internship receipt is attached to this email.</strong> Please keep it for your records. Your registration ID is: <strong>INT-${email.split("@")[0]}</strong>
+                            <strong>Attached to this email is your internship receipt.</strong> Please keep it for your records. Your registration ID is: <strong>INT-${email.split("@")[0]}</strong>
                         </p>
                     </div>
                     
                     <p style="color: #4a5568; font-size: 14px; line-height: 1.6; margin: 20px 0;">
                         <strong>What's Next?</strong><br>
                         • Your mentor will reach out to you shortly with orientation details<br>
-                        • Please review our company handbook and policies<br>
+                        • Please review our policies at etcntech.org<br>
                         • Mark your calendar for your first day<br>
                         • Come prepared with enthusiasm and your laptop
                     </p>
@@ -376,7 +376,7 @@ async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
                 
                 <div style="background: #f7fafc; padding: 20px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e2e8f0;">
                     <p style="color: #718096; font-size: 12px; margin: 0;">
-                        Enterprise Technology Solutions | Transforming Ideas into Reality
+                        Enterprise Network Technology | Transforming Ideas into Reality
                     </p>
                 </div>
             </div>
