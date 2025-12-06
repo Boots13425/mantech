@@ -54,6 +54,9 @@ app.use("/api", internRegistrationRouter)
 
 const attendanceRouter = require("./routes/attendance")
 
+const receiptRouter = require("./routes/receipt-management")
+
+app.use("/api/receipts", receiptRouter)
 app.use("/api/attendance", attendanceRouter)
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
@@ -153,7 +156,7 @@ app.listen(PORT, () => {
     console.log(`
     ╔═══════════════════════════════════════════╗
     ║         MANTech Server Running            ║
-    ║     Server: http://localhost:${PORT}       ║
+    ║     Server: http://localhost:${PORT}      ║
     ║     Environment: ${process.env.NODE_ENV || 'development'}       ║
     ╚═══════════════════════════════════════════╝
     `);
