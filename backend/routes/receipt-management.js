@@ -396,7 +396,7 @@ router.get("/print/:receiptId", async (req, res) => {
 
       // Header with branding
       doc.fontSize(20).font("Helvetica-Bold").text("ETS NTECH", 40, 40)
-      doc.fontSize(10).font("Helvetica").text("Enterprise Technology Solutions", 40, 65)
+      doc.fontSize(10).font("Helvetica").text("Enterprise Network Technology", 40, 65)
       doc.moveTo(40, 85).lineTo(555, 85).stroke("#667eea")
 
       // Receipt title
