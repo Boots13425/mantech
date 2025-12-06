@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipt Management - MANTech</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/receipt-management.css">
+</head>
+<body>
+  <div class="receipt-container">
+    <!-- Header -->
+    <div class="receipt-header">
+      <button class="back-btn" onclick="window.location.href='dashboard.html'">
+        <span>← Back to Dashboard</span>
+      </button>
+      <h1>Receipt Management</h1>
+      <p class="header-subtitle">Create, search, and manage payment receipts</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="receipt-tabs">
+      <button class="tab-btn active" data-tab="create">Create Receipt</button>
+      <button class="tab-btn" data-tab="search">Search Receipts</button>
+    </div>
+
+    <!-- Create Receipt Tab -->
+    <div id="create" class="tab-content active">
+      <div class="receipt-form-wrapper">
+        <form id="receiptForm" class="receipt-form">
+          <!-- Intern Selection Section -->
+          <div class="form-section">
+            <h3 class="section-title">Intern Selection</h3>
+            <div class="form-group">
+              <label for="internSearch">Search Intern *</label>
+              <div class="search-wrapper">
+                <input
+                  type="text"
+                  id="internSearch"
+                  class="form-input"
+                  placeholder="Search by name, email..."
+                  autocomplete="off"
+                  required
+                />
+                <div id="internSuggestions" class="suggestions-dropdown"></div>
+              </div>
+              <input type="hidden" id="internId" required />
+              <div id="internDetails" class="intern-details" style="display: none;">
+                <div class="detail-row">
+                  <span class="label">Name:</span>
+                  <span id="detailName" class="value"></span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Email:</span>
+                  <span id="detailEmail" class="value"></span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Phone:</span>
+                  <span id="detailPhone" class="value"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Details Section -->
+          <div class="form-section">
+            <h3 class="section-title">Payment Details</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="paymentDate">Payment Date *</label>
+                <input type="date" id="paymentDate" class="form-input" required />
+              </div>
+              <div class="form-group">
+                <label for="paymentType">Payment Type *</label>
+                <select id="paymentType" class="form-input" required>
+                  <option value="">Select payment type</option>
+                  <option value="Registration Fee">Registration Fee</option>
+                  <option value="Internship Fee">Internship Fee</option>
+                  <option value="Other Fees">Other Fees</option>
+                  <option value="Custom Payment">Custom Payment</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Conditional Fields for Payment Type -->
+            <div id="feeTypeField" class="form-group" style="display: none;">
+              <label for="feeTypeDescription">Fee Type Description *</label>
+              <input type="text" id="feeTypeDescription" class="form-input" placeholder="e.g., Insurance, Materials" />
+            </div>
+
+            <div id="customPaymentField" class="form-group" style="display: none;">
+              <label for="paymentDescription">Payment Description *</label>
+              <input type="text" id="paymentDescription" class="form-input" placeholder="Describe the payment" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="amountDue">Amount Due *</label>
+                <input type="number" id="amountDue" class="form-input" placeholder="0.00" step="0.01" required />
+              </div>
+              <div class="form-group">
+                <label for="amountPaid">Amount Paid *</label>
+                <input type="number" id="amountPaid" class="form-input" placeholder="0.00" step="0.01" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="paymentMethod">Payment Method *</label>
+                <select id="paymentMethod" class="form-input" required>
+                  <option value="">Select method</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Mobile Money">Mobile Money</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="Card">Card</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="receivedBy">Received By *</label>
+                <input type="text" id="receivedBy" class="form-input" readonly />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notes (Optional)</label>
+              <textarea id="notes" class="form-input" placeholder="Add any additional notes" rows="4"></textarea>
+            </div>
+          </div>
+
+          <!-- Preview and Submit -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="previewReceipt()">Preview</button>
+            <button type="submit" class="btn btn-primary">Generate Receipt</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Search Tab -->
+    <div id="search" class="tab-content">
+      <div class="search-wrapper-main">
+        <div class="search-filters">
+          <input type="text" id="searchQuery" class="form-input" placeholder="Search by Receipt ID or Intern Name..." />
+          <input type="date" id="searchStartDate" class="form-input" placeholder="From Date" />
+          <input type="date" id="searchEndDate" class="form-input" placeholder="To Date" />
+          <select id="searchPaymentType" class="form-input">
+            <option value="">All Payment Types</option>
+            <option value="Registration Fee">Registration Fee</option>
+            <option value="Internship Fee">Internship Fee</option>
+            <option value="Other Fees">Other Fees</option>
+            <option value="Custom Payment">Custom Payment</option>
+          </select>
+          <button class="btn btn-primary" onclick="searchReceipts()">Search</button>
+        </div>
+
+        <div id="searchResults" class="search-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div id="previewModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>Receipt Preview</h2>
+        <button class="close-btn" onclick="closePreview()">&times;</button>
+      </div>
+      <div id="previewContent" class="preview-content"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closePreview()">Close</button>
+        <button class="btn btn-primary" onclick="downloadPreviewPDF()">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/receipt-management.js"></script>
+</body>
+</html>
