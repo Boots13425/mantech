@@ -222,15 +222,15 @@ async function previewReceipt() {
         <div class="receipt-summary">
           <div class="receipt-summary-row">
             <span>Amount Due:</span>
-            <span>₦${formData.amountDue.toLocaleString()}</span>
+            <span>${formatCurrency(formData.amountDue)}</span>
           </div>
           <div class="receipt-summary-row">
             <span>Amount Paid:</span>
-            <span>₦${formData.amountPaid.toLocaleString()}</span>
+            <span>${formatCurrency(formData.amountPaid)}</span>
           </div>
           <div class="receipt-summary-row">
             <span>Balance:</span>
-            <span>₦${balance.toLocaleString()}</span>
+            <span>${formatCurrency(balance)}</span>
           </div>
         </div>
 
@@ -303,7 +303,7 @@ async function searchReceipts() {
                 <td>${receipt.receipt_id}</td>
                 <td>${receipt.first_name} ${receipt.last_name}</td>
                 <td>${receipt.payment_type}</td>
-                <td>₦${receipt.amount_paid.toLocaleString()}</td>
+                <td>${formatCurrency(receipt.amount_paid)}</td>
                 <td>${new Date(receipt.payment_date).toLocaleDateString()}</td>
                 <td><span style="padding: 4px 8px; background: ${receipt.status === "Active" ? "#d0f0c0" : "#fcc2c2"}; border-radius: 4px; font-size: 12px;">${receipt.status}</span></td>
                 <td>
@@ -336,4 +336,269 @@ function viewReceipt(receiptId) {
 // Print receipt
 function printReceipt(receiptId) {
   window.open(`/api/receipts/print/${receiptId}`, "_blank")
+}
+
+const CURRENCY = "XAF"
+
+function formatCurrency(amount) {
+  return new Intl.NumberFormat("fr-CM", {
+    style: "currency",
+    currency: CURRENCY,
+  }).format(amount)
+}
+
+async function loadAllReceipts() {
+  try {
+    console.log("[v0] Fetching all receipts from /api/receipts/all")
+    const response = await fetch("/api/receipts/all")
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    console.log("[v0] Successfully fetched receipts:", data)
+    displayReceiptsCards(data)
+  } catch (error) {
+    console.error("[v0] Error loading receipts:", error)
+    alert("Failed to load receipts: " + error.message)
+    // Display empty state on error
+    document.getElementById("viewResults").innerHTML =
+      "<p style='padding: 40px 20px; text-align: center; color: #e53e3e;'>Error loading receipts. Please try again.</p>"
+  }
+}
+
+function displayReceiptsCards(receipts) {
+  let html = ""
+
+  if (!receipts || receipts.length === 0) {
+    html = "<p style='padding: 40px 20px; text-align: center; color: #718096;'>No receipts found</p>"
+  } else {
+    html = receipts
+      .map(
+        (receipt) => `
+      <div class="receipt-card">
+        <div class="receipt-card-info">
+          <div class="receipt-card-id">${receipt.receipt_id}</div>
+          <div class="receipt-card-intern">${receipt.first_name} ${receipt.last_name}</div>
+          <div class="receipt-card-meta">${receipt.payment_type} • ${new Date(receipt.payment_date).toLocaleDateString()}</div>
+        </div>
+        <div class="receipt-card-amount">
+          <div class="receipt-card-amount-value">${formatCurrency(receipt.amount_paid)}</div>
+          <div class="receipt-card-amount-type">${receipt.status}</div>
+        </div>
+        <div class="receipt-card-actions">
+          <button class="action-btn-details" onclick="viewReceiptDetails(${receipt.id})">View</button>
+          <button class="action-btn-edit" onclick="openEditModal(${receipt.id})">Edit</button>
+          <button class="action-btn-print" onclick="printReceipt(${receipt.id})">Print</button>
+        </div>
+      </div>
+    `,
+      )
+      .join("")
+  }
+
+  document.getElementById("viewResults").innerHTML = html
+}
+
+async function filterReceipts() {
+  const date = document.getElementById("viewFilterDate").value
+  const type = document.getElementById("viewFilterType").value
+
+  try {
+    const params = new URLSearchParams()
+    if (date) params.append("date", date)
+    if (type) params.append("type", type)
+
+    console.log("[v0] Filtering receipts with params:", params.toString())
+    const response = await fetch(`/api/receipts/filter?${params}`)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+    console.log("[v0] Filter results:", data)
+    displayReceiptsCards(data)
+  } catch (error) {
+    console.error("[v0] Error filtering receipts:", error)
+    alert("Failed to filter receipts: " + error.message)
+  }
+}
+
+async function viewReceiptDetails(receiptId) {
+  try {
+    const response = await fetch(`/api/receipts/${receiptId}`)
+    const receipt = await response.json()
+
+    const balance = receipt.amount_due - receipt.amount_paid
+
+    const detailsHTML = `
+      <div class="receipt-preview">
+        <div class="receipt-preview-header">
+          <div class="receipt-company">ETS NTECH</div>
+          <div class="receipt-tagline">Enterprise Technology Solutions</div>
+          <div class="receipt-title">PAYMENT RECEIPT</div>
+        </div>
+
+        <div class="receipt-section">
+          <div class="receipt-section-title">Receipt Details</div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Receipt ID:</span>
+            <span class="receipt-row-value">${receipt.receipt_id}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Date:</span>
+            <span class="receipt-row-value">${new Date(receipt.payment_date).toLocaleDateString()}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Status:</span>
+            <span class="receipt-row-value">${receipt.status}</span>
+          </div>
+        </div>
+
+        <div class="receipt-section">
+          <div class="receipt-section-title">Intern Information</div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Full Name:</span>
+            <span class="receipt-row-value">${receipt.first_name} ${receipt.last_name}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Email:</span>
+            <span class="receipt-row-value">${receipt.email}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Phone:</span>
+            <span class="receipt-row-value">${receipt.phone || "N/A"}</span>
+          </div>
+        </div>
+
+        <div class="receipt-section">
+          <div class="receipt-section-title">Payment Information</div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Payment Type:</span>
+            <span class="receipt-row-value">${receipt.payment_type}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Payment Method:</span>
+            <span class="receipt-row-value">${receipt.payment_method}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Received By:</span>
+            <span class="receipt-row-value">${receipt.received_by}</span>
+          </div>
+        </div>
+
+        <div class="receipt-summary">
+          <div class="receipt-summary-row">
+            <span>Amount Due:</span>
+            <span>${formatCurrency(receipt.amount_due)}</span>
+          </div>
+          <div class="receipt-summary-row">
+            <span>Amount Paid:</span>
+            <span>${formatCurrency(receipt.amount_paid)}</span>
+          </div>
+          <div class="receipt-summary-row">
+            <span>Balance:</span>
+            <span>${formatCurrency(balance)}</span>
+          </div>
+        </div>
+
+        ${
+          receipt.notes
+            ? `
+          <div class="receipt-section">
+            <div class="receipt-section-title">Notes</div>
+            <p style="margin: 0; font-size: 14px; color: #4a5568;">${receipt.notes}</p>
+          </div>
+        `
+            : ""
+        }
+
+        <div class="receipt-qr">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${receipt.receipt_id}" alt="QR Code" />
+        </div>
+      </div>
+    `
+
+    document.getElementById("detailsContent").innerHTML = detailsHTML
+    document.getElementById("detailsModal").style.display = "flex"
+    window.currentReceiptId = receiptId
+  } catch (error) {
+    console.error("Error fetching receipt details:", error)
+    alert("Failed to load receipt details")
+  }
+}
+
+async function openEditModal(receiptId) {
+  try {
+    const response = await fetch(`/api/receipts/${receiptId}`)
+    const receipt = await response.json()
+
+    document.getElementById("editReceiptId").value = receiptId
+    document.getElementById("editPaymentDate").value = receipt.payment_date.split("T")[0]
+    document.getElementById("editPaymentType").value = receipt.payment_type
+    document.getElementById("editAmountDue").value = receipt.amount_due
+    document.getElementById("editAmountPaid").value = receipt.amount_paid
+    document.getElementById("editPaymentMethod").value = receipt.payment_method
+    document.getElementById("editReceivedBy").value = receipt.received_by
+    document.getElementById("editNotes").value = receipt.notes || ""
+
+    document.getElementById("editModal").style.display = "flex"
+  } catch (error) {
+    console.error("Error loading receipt for edit:", error)
+    alert("Failed to load receipt for editing")
+  }
+}
+
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none"
+}
+
+function closeDetailsModal() {
+  document.getElementById("detailsModal").style.display = "none"
+}
+
+document.getElementById("editForm").addEventListener("submit", async (e) => {
+  e.preventDefault()
+
+  const receiptId = document.getElementById("editReceiptId").value
+  const editData = {
+    paymentDate: document.getElementById("editPaymentDate").value,
+    amountDue: Number.parseFloat(document.getElementById("editAmountDue").value),
+    amountPaid: Number.parseFloat(document.getElementById("editAmountPaid").value),
+    paymentMethod: document.getElementById("editPaymentMethod").value,
+    receivedBy: document.getElementById("editReceivedBy").value,
+    notes: document.getElementById("editNotes").value || null,
+    userId: userId,
+  }
+
+  try {
+    const response = await fetch(`/api/receipts/update/${receiptId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editData),
+    })
+
+    if (response.ok) {
+      alert("Receipt updated successfully")
+      closeEditModal()
+      loadAllReceipts()
+    } else {
+      const result = await response.json()
+      alert("Error: " + result.message)
+    }
+  } catch (error) {
+    console.error("Error updating receipt:", error)
+    alert("Failed to update receipt")
+  }
+})
+
+function openEditFromDetails() {
+  openEditModal(window.currentReceiptId)
+  closeDetailsModal()
+}
+
+function printFromDetails() {
+  printReceipt(window.currentReceiptId)
 }

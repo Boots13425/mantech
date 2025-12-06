@@ -22,6 +22,7 @@
     <div class="receipt-tabs">
       <button class="tab-btn active" data-tab="create">Create Receipt</button>
       <button class="tab-btn" data-tab="search">Search Receipts</button>
+      <button class="tab-btn" data-tab="view">View Receipts</button>
     </div>
 
     <!-- Create Receipt Tab -->
@@ -157,6 +158,26 @@
         <div id="searchResults" class="search-results"></div>
       </div>
     </div>
+
+    <!-- View Receipts Tab -->
+    <div id="view" class="tab-content">
+      <div class="view-wrapper">
+        <div class="view-filters">
+          <button class="btn btn-primary" onclick="loadAllReceipts()">Load All Receipts</button>
+          <input type="date" id="viewFilterDate" class="form-input" placeholder="Filter by date" />
+          <select id="viewFilterType" class="form-input">
+            <option value="">All Types</option>
+            <option value="Registration Fee">Registration Fee</option>
+            <option value="Internship Fee">Internship Fee</option>
+            <option value="Other Fees">Other Fees</option>
+            <option value="Custom Payment">Custom Payment</option>
+          </select>
+          <button class="btn btn-secondary" onclick="filterReceipts()">Filter</button>
+        </div>
+
+        <div id="viewResults" class="view-results"></div>
+      </div>
+    </div>
   </div>
 
   <!-- Preview Modal -->
@@ -170,6 +191,88 @@
       <div class="modal-actions">
         <button class="btn btn-secondary" onclick="closePreview()">Close</button>
         <button class="btn btn-primary" onclick="downloadPreviewPDF()">Download PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Receipt Modal -->
+  <div id="editModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>Edit Receipt</h2>
+        <button class="close-btn" onclick="closeEditModal()">&times;</button>
+      </div>
+      <form id="editForm" class="receipt-form">
+        <input type="hidden" id="editReceiptId" />
+        
+        <div class="form-section">
+          <h3 class="section-title">Payment Details</h3>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editPaymentDate">Payment Date *</label>
+              <input type="date" id="editPaymentDate" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label for="editPaymentType">Payment Type *</label>
+              <input type="text" id="editPaymentType" class="form-input" readonly />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editAmountDue">Amount Due *</label>
+              <input type="number" id="editAmountDue" class="form-input" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label for="editAmountPaid">Amount Paid *</label>
+              <input type="number" id="editAmountPaid" class="form-input" step="0.01" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editPaymentMethod">Payment Method *</label>
+              <select id="editPaymentMethod" class="form-input" required>
+                <option value="">Select method</option>
+                <option value="Cash">Cash</option>
+                <option value="Mobile Money">Mobile Money</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+                <option value="Card">Card</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="editReceivedBy">Received By *</label>
+              <input type="text" id="editReceivedBy" class="form-input" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="editNotes">Notes (Optional)</label>
+            <textarea id="editNotes" class="form-input" rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Receipt Details Preview Modal -->
+  <div id="detailsModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2>Receipt Details</h2>
+        <button class="close-btn" onclick="closeDetailsModal()">&times;</button>
+      </div>
+      <div id="detailsContent" class="preview-content"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeDetailsModal()">Close</button>
+        <button class="btn btn-primary" onclick="openEditFromDetails()">Edit</button>
+        <button class="btn btn-success" onclick="printFromDetails()">Print</button>
       </div>
     </div>
   </div>

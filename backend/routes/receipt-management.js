@@ -40,6 +40,68 @@ async function generateReceiptId() {
   }
 }
 
+// Get all receipts
+router.get("/all", async (req, res) => {
+  try {
+    const connection = await pool.getConnection()
+    try {
+      const [receipts] = await connection.query(
+        `SELECT r.id, r.receipt_id, i.first_name, i.last_name, r.payment_type, 
+                r.amount_paid, r.payment_date, r.status, r.amount_due
+         FROM receipts r
+         JOIN interns i ON r.intern_id = i.id
+         WHERE r.status != 'Void'
+         ORDER BY r.payment_date DESC
+         LIMIT 100`,
+      )
+
+      res.json(receipts)
+    } finally {
+      connection.release()
+    }
+  } catch (error) {
+    console.error("Error fetching all receipts:", error)
+    res.status(500).json({ message: "Failed to fetch receipts" })
+  }
+})
+
+// Filter receipts
+router.get("/filter", async (req, res) => {
+  try {
+    const { date, type } = req.query
+    const connection = await pool.getConnection()
+
+    try {
+      let query = `SELECT r.id, r.receipt_id, i.first_name, i.last_name, r.payment_type, 
+                          r.amount_paid, r.payment_date, r.status, r.amount_due
+                   FROM receipts r
+                   JOIN interns i ON r.intern_id = i.id
+                   WHERE r.status != 'Void'`
+      const params = []
+
+      if (date) {
+        query += ` AND DATE(r.payment_date) = ?`
+        params.push(date)
+      }
+
+      if (type) {
+        query += ` AND r.payment_type = ?`
+        params.push(type)
+      }
+
+      query += ` ORDER BY r.payment_date DESC`
+
+      const [receipts] = await connection.query(query, params)
+      res.json(receipts)
+    } finally {
+      connection.release()
+    }
+  } catch (error) {
+    console.error("Error filtering receipts:", error)
+    res.status(500).json({ message: "Failed to filter receipts" })
+  }
+})
+
 // Fuzzy search interns
 router.get("/search-interns", async (req, res) => {
   try {
@@ -278,10 +340,9 @@ router.get("/:receiptId", async (req, res) => {
     const connection = await pool.getConnection()
     try {
       const [receipts] = await connection.query(
-        `SELECT r.*, i.first_name, i.last_name, i.email, i.phone, u.username
+        `SELECT r.*, i.first_name, i.last_name, i.email, i.phone
          FROM receipts r
          JOIN interns i ON r.intern_id = i.id
-         LEFT JOIN users u ON r.created_by = u.id
          WHERE r.id = ? OR r.receipt_id = ?`,
         [receiptId, receiptId],
       )
@@ -392,7 +453,7 @@ router.get("/print/:receiptId", async (req, res) => {
       doc.font("Helvetica-Bold").text("Payment Method:", 40, descY)
       doc.font("Helvetica").text(receipt.payment_method, 150, descY)
 
-      // Financial Summary
+      // Financial Summary with XAF currency
       const financeY = descY + 60
       doc.fontSize(11).font("Helvetica-Bold").text("FINANCIAL SUMMARY", 40, financeY)
       doc
@@ -406,9 +467,10 @@ router.get("/print/:receiptId", async (req, res) => {
       doc.text("Balance:", 40, financeY + 95)
 
       doc.font("Helvetica")
-      doc.text(`₦${receipt.amount_due.toLocaleString()}`, 200, financeY + 45)
-      doc.text(`₦${receipt.amount_paid.toLocaleString()}`, 200, financeY + 70)
-      doc.text(`₦${receipt.balance.toLocaleString()}`, 200, financeY + 95)
+      doc.text(`${receipt.amount_due.toLocaleString()} XAF`, 200, financeY + 45)
+      doc.text(`${receipt.amount_paid.toLocaleString()} XAF`, 200, financeY + 70)
+      const balance = receipt.amount_due - receipt.amount_paid
+      doc.text(`${balance.toLocaleString()} XAF`, 200, financeY + 95)
 
       // QR Code
       const qrY = financeY + 150
@@ -491,6 +553,73 @@ router.post("/void/:receiptId", async (req, res) => {
   } catch (error) {
     console.error("Void error:", error)
     res.status(500).json({ message: "Failed to void receipt" })
+  }
+})
+
+// Update receipt
+router.put("/update/:receiptId", async (req, res) => {
+  try {
+    const { receiptId } = req.params
+    const { paymentDate, amountDue, amountPaid, paymentMethod, receivedBy, notes, userId } = req.body
+
+    if (!paymentDate || amountDue === undefined || amountPaid === undefined) {
+      return res.status(400).json({ message: "Missing required fields" })
+    }
+
+    const connection = await pool.getConnection()
+    try {
+      await connection.beginTransaction()
+
+      // Get current receipt for audit log
+      const [currentReceipt] = await connection.query(`SELECT * FROM receipts WHERE id = ? OR receipt_id = ?`, [
+        receiptId,
+        receiptId,
+      ])
+
+      if (currentReceipt.length === 0) {
+        return res.status(404).json({ message: "Receipt not found" })
+      }
+
+      // Update receipt
+      await connection.query(
+        `UPDATE receipts 
+         SET payment_date = ?, amount_due = ?, amount_paid = ?, 
+             payment_method = ?, received_by = ?, notes = ?, updated_at = NOW()
+         WHERE id = ? OR receipt_id = ?`,
+        [paymentDate, amountDue, amountPaid, paymentMethod, receivedBy, notes, receiptId, receiptId],
+      )
+
+      // Create audit log for update
+      await connection.query(
+        `INSERT INTO receipt_audit_logs 
+         (receipt_id, action, action_by, old_values, new_values)
+         SELECT id, 'UPDATE', ?, 
+                JSON_OBJECT('amount_due', ?, 'amount_paid', ?),
+                JSON_OBJECT('amount_due', ?, 'amount_paid', ?)
+         FROM receipts
+         WHERE id = ? OR receipt_id = ?`,
+        [
+          userId,
+          currentReceipt[0].amount_due,
+          currentReceipt[0].amount_paid,
+          amountDue,
+          amountPaid,
+          receiptId,
+          receiptId,
+        ],
+      )
+
+      await connection.commit()
+      res.json({ message: "Receipt updated successfully" })
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
+  } catch (error) {
+    console.error("Update error:", error)
+    res.status(500).json({ message: "Failed to update receipt" })
   }
 })
 
