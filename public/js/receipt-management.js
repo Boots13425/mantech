@@ -171,7 +171,7 @@ async function previewReceipt() {
       <div class="receipt-preview">
         <div class="receipt-preview-header">
           <div class="receipt-company">ETS NTECH</div>
-          <div class="receipt-tagline">Enterprise Technology Solutions</div>
+          <div class="receipt-tagline">Enterprise Network Technology</div>
           <div class="receipt-title">PAYMENT RECEIPT</div>
         </div>
 
@@ -457,7 +457,7 @@ async function viewReceiptDetails(receiptId) {
       <div class="receipt-preview">
         <div class="receipt-preview-header">
           <div class="receipt-company">ETS NTECH</div>
-          <div class="receipt-tagline">Enterprise Technology Solutions</div>
+          <div class="receipt-tagline">Enterprise Network Technology</div>
           <div class="receipt-title">PAYMENT RECEIPT</div>
         </div>
 
