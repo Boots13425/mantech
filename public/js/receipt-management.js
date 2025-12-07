@@ -602,3 +602,51 @@ function openEditFromDetails() {
 function printFromDetails() {
   printReceipt(window.currentReceiptId)
 }
+
+// --- Automatic (debounced) search wiring (additive, non-breaking) ---
+;(function setupAutoSearch() {
+  const queryEl = document.getElementById('searchQuery')
+  const startEl = document.getElementById('searchStartDate')
+  const endEl = document.getElementById('searchEndDate')
+  const typeEl = document.getElementById('searchPaymentType')
+
+  if (!queryEl || !startEl || !endEl || !typeEl) return
+
+  let searchTimer = null
+
+  const scheduleSearch = (delay = 300) => {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+      try {
+        searchReceipts()
+      } catch (e) {
+        console.error('Auto-search error:', e)
+      }
+    }, delay)
+  }
+
+  // Trigger as user types (debounced)
+  queryEl.addEventListener('input', (e) => {
+    const v = e.target.value.trim()
+    if (v.length === 0) {
+      // If empty, perform a search so filters (dates/type) are respected
+      scheduleSearch(200)
+      return
+    }
+    if (v.length >= 1) scheduleSearch(300)
+  })
+
+  // Trigger on date/select changes (immediate-ish)
+  startEl.addEventListener('change', () => scheduleSearch(100))
+  endEl.addEventListener('change', () => scheduleSearch(100))
+  typeEl.addEventListener('change', () => scheduleSearch(100))
+
+  // Optional: allow Enter in the query field to run immediate search
+  queryEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      clearTimeout(searchTimer)
+      searchReceipts()
+    }
+  })
+})()
