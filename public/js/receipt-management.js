@@ -303,7 +303,13 @@ async function searchReceipts() {
                 <td>${receipt.receipt_id}</td>
                 <td>${receipt.first_name} ${receipt.last_name}</td>
                 <td>${receipt.payment_type}</td>
-                <td>${formatCurrency(receipt.amount_paid)}</td>
+                <td>${formatCurrency((() => {
+                  let totalPaid = receipt.total_paid !== undefined ? receipt.total_paid : receipt.amount_paid
+                  if (receipt.amount_due !== undefined && totalPaid > receipt.amount_due) {
+                    totalPaid = receipt.amount_due
+                  }
+                  return totalPaid
+                })())}</td>
                 <td>${new Date(receipt.payment_date).toLocaleDateString()}</td>
                 <td><span style="padding: 4px 8px; background: ${receipt.status === "Active" ? "#d0f0c0" : "#fcc2c2"}; border-radius: 4px; font-size: 12px;">${receipt.status}</span></td>
                 <td>
@@ -376,7 +382,14 @@ function displayReceiptsCards(receipts) {
   } else {
     html = receipts
       .map(
-        (receipt) => `
+        (receipt) => {
+          // Use total_paid if available, otherwise fall back to amount_paid
+          // Ensure it never exceeds amount_due (the amount that should be paid)
+          let totalPaid = receipt.total_paid !== undefined ? receipt.total_paid : receipt.amount_paid
+          if (receipt.amount_due !== undefined && totalPaid > receipt.amount_due) {
+            totalPaid = receipt.amount_due
+          }
+          return `
       <div class="receipt-card">
         <div class="receipt-card-info">
           <div class="receipt-card-id">${receipt.receipt_id}</div>
@@ -384,7 +397,7 @@ function displayReceiptsCards(receipts) {
           <div class="receipt-card-meta">${receipt.payment_type} • ${new Date(receipt.payment_date).toLocaleDateString()}</div>
         </div>
         <div class="receipt-card-amount">
-          <div class="receipt-card-amount-value">${formatCurrency(receipt.amount_paid)}</div>
+          <div class="receipt-card-amount-value">${formatCurrency(totalPaid)}</div>
           <div class="receipt-card-amount-type">${receipt.status}</div>
         </div>
         <div class="receipt-card-actions">
@@ -393,7 +406,8 @@ function displayReceiptsCards(receipts) {
           <button class="action-btn-print" onclick="printReceipt(${receipt.id})">Print</button>
         </div>
       </div>
-    `,
+    `
+        },
       )
       .join("")
   }
@@ -431,7 +445,8 @@ async function viewReceiptDetails(receiptId) {
     const response = await fetch(`/api/receipts/${receiptId}`)
     const receipt = await response.json()
 
-    const totalPaid = receipt.total_paid || receipt.amount_paid
+    // total_paid now includes initial amount_paid + partial payments, so use it directly
+    const totalPaid = receipt.total_paid !== undefined && receipt.total_paid !== null ? receipt.total_paid : receipt.amount_paid
     const balance = receipt.amount_due - totalPaid
 
     const paymentStatus = balance === 0 ? "Paid in Full" : balance > 0 ? "Pending Payment" : "Overpayment Error"
@@ -545,7 +560,8 @@ async function viewReceiptDetails(receiptId) {
 
 function openPartialPaymentModal() {
   const receipt = window.currentReceiptDetails
-  const totalPaid = receipt.total_paid || receipt.amount_paid
+  // total_paid now includes initial amount_paid + partial payments
+  const totalPaid = receipt.total_paid !== undefined && receipt.total_paid !== null ? receipt.total_paid : receipt.amount_paid
   const balance = receipt.amount_due - totalPaid
 
   document.getElementById("outstandingBalance").value = formatCurrency(balance)
@@ -563,7 +579,8 @@ function closePartialPaymentModal() {
 
 document.getElementById("partialPaymentAmount").addEventListener("input", (e) => {
   const receipt = window.currentReceiptDetails
-  const totalPaid = receipt.total_paid || receipt.amount_paid
+  // total_paid now includes initial amount_paid + partial payments
+  const totalPaid = receipt.total_paid !== undefined && receipt.total_paid !== null ? receipt.total_paid : receipt.amount_paid
   const balance = receipt.amount_due - totalPaid
   const paymentAmount = Number.parseFloat(e.target.value) || 0
   const newBalance = balance - paymentAmount
