@@ -396,7 +396,7 @@ router.get("/print/:receiptId", async (req, res) => {
 
       // Header with branding
       doc.fontSize(20).font("Helvetica-Bold").text("ETS NTECH", 40, 40)
-      doc.fontSize(10).font("Helvetica").text("Enterprise Network Technology", 40, 65)
+      doc.fontSize(10).font("Helvetica").text("Enterprise Technology Solutions", 40, 65)
       doc.moveTo(40, 85).lineTo(555, 85).stroke("#667eea")
 
       // Receipt title
@@ -620,6 +620,120 @@ router.put("/update/:receiptId", async (req, res) => {
   } catch (error) {
     console.error("Update error:", error)
     res.status(500).json({ message: "Failed to update receipt" })
+  }
+})
+
+router.get("/payment-history/:receiptId", async (req, res) => {
+  try {
+    const { receiptId } = req.params
+
+    const connection = await pool.getConnection()
+    try {
+      const [payments] = await connection.query(
+        `SELECT p.id, p.payment_amount, p.payment_method, p.payment_date, 
+                p.recorded_at, u.email as recorded_by_email
+         FROM payments p
+         JOIN users u ON p.recorded_by = u.id
+         JOIN receipts r ON p.receipt_id = r.id
+         WHERE r.id = ? OR r.receipt_id = ?
+         ORDER BY p.payment_date ASC`,
+        [receiptId, receiptId],
+      )
+
+      res.json(payments)
+    } finally {
+      connection.release()
+    }
+  } catch (error) {
+    console.error("Error fetching payment history:", error)
+    res.status(500).json({ message: "Failed to fetch payment history" })
+  }
+})
+
+router.post("/add-payment/:receiptId", async (req, res) => {
+  try {
+    const { receiptId } = req.params
+    const { paymentAmount, paymentMethod, paymentDate, notes, userId } = req.body
+
+    if (!paymentAmount || !paymentMethod || !paymentDate) {
+      return res.status(400).json({ message: "Missing required fields" })
+    }
+
+    if (paymentAmount <= 0) {
+      return res.status(400).json({ message: "Payment amount must be greater than 0" })
+    }
+
+    const connection = await pool.getConnection()
+    try {
+      await connection.beginTransaction()
+
+      // Get receipt details
+      const [receipts] = await connection.query(
+        `SELECT r.*, COALESCE(SUM(p.payment_amount), 0) as total_paid
+         FROM receipts r
+         LEFT JOIN payments p ON r.id = p.receipt_id
+         WHERE r.id = ? OR r.receipt_id = ?
+         GROUP BY r.id`,
+        [receiptId, receiptId],
+      )
+
+      if (receipts.length === 0) {
+        return res.status(404).json({ message: "Receipt not found" })
+      }
+
+      const receipt = receipts[0]
+      const totalPaid = receipt.total_paid + paymentAmount
+      const remainingBalance = receipt.amount_due - totalPaid
+
+      // Validate overpayment
+      if (remainingBalance < 0) {
+        await connection.rollback()
+        connection.release()
+        return res.status(400).json({
+          message: `Overpayment error. Remaining balance is ${Math.abs(remainingBalance).toLocaleString()} XAF. You can only pay up to ${(receipt.amount_due - receipt.total_paid).toLocaleString()} XAF.`,
+        })
+      }
+
+      // Insert payment record
+      await connection.query(
+        `INSERT INTO payments (receipt_id, payment_amount, payment_method, payment_date, recorded_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [receipt.id, paymentAmount, paymentMethod, paymentDate, userId, notes || null],
+      )
+
+      // Update receipt payment status
+      const newStatus = remainingBalance === 0 ? "Paid in Full" : "Pending Payment"
+      await connection.query(
+        `UPDATE receipts 
+         SET payment_status = ?, initial_payment_recorded = TRUE
+         WHERE id = ?`,
+        [newStatus, receipt.id],
+      )
+
+      // Create audit log
+      await connection.query(
+        `INSERT INTO receipt_audit_logs (receipt_id, action, action_by, new_values)
+         VALUES (?, 'PARTIAL_PAYMENT', ?, ?)`,
+        [receipt.id, userId, JSON.stringify({ payment_amount: paymentAmount, new_status: newStatus })],
+      )
+
+      await connection.commit()
+
+      res.status(201).json({
+        message: "Partial payment recorded successfully",
+        newStatus,
+        remainingBalance,
+        totalPaid,
+      })
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
+  } catch (error) {
+    console.error("Error recording partial payment:", error)
+    res.status(500).json({ message: "Failed to record partial payment" })
   }
 })
 
