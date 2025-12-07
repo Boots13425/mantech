@@ -47,10 +47,13 @@ router.get("/all", async (req, res) => {
     try {
       const [receipts] = await connection.query(
         `SELECT r.id, r.receipt_id, i.first_name, i.last_name, r.payment_type, 
-                r.amount_paid, r.payment_date, r.status, r.amount_due
+                r.amount_paid, r.payment_date, r.status, r.amount_due,
+                LEAST((COALESCE(SUM(p.payment_amount), 0) + r.amount_paid), r.amount_due) as total_paid
          FROM receipts r
          JOIN interns i ON r.intern_id = i.id
+         LEFT JOIN payments p ON r.id = p.receipt_id
          WHERE r.status != 'Void'
+         GROUP BY r.id
          ORDER BY r.payment_date DESC
          LIMIT 100`,
       )
@@ -73,9 +76,11 @@ router.get("/filter", async (req, res) => {
 
     try {
       let query = `SELECT r.id, r.receipt_id, i.first_name, i.last_name, r.payment_type, 
-                          r.amount_paid, r.payment_date, r.status, r.amount_due
+                          r.amount_paid, r.payment_date, r.status, r.amount_due,
+                          LEAST((COALESCE(SUM(p.payment_amount), 0) + r.amount_paid), r.amount_due) as total_paid
                    FROM receipts r
                    JOIN interns i ON r.intern_id = i.id
+                   LEFT JOIN payments p ON r.id = p.receipt_id
                    WHERE r.status != 'Void'`
       const params = []
 
@@ -89,7 +94,7 @@ router.get("/filter", async (req, res) => {
         params.push(type)
       }
 
-      query += ` ORDER BY r.payment_date DESC`
+      query += ` GROUP BY r.id ORDER BY r.payment_date DESC`
 
       const [receipts] = await connection.query(query, params)
       res.json(receipts)
@@ -305,13 +310,16 @@ router.get("/search", async (req, res) => {
         params,
       )
 
-      // Get paginated results
+      // Get paginated results with total_paid (capped at amount_due)
       const [receipts] = await connection.query(
         `SELECT r.id, r.receipt_id, i.first_name, i.last_name, i.email,
-                r.payment_type, r.amount_paid, r.payment_date, r.status
+                r.payment_type, r.amount_paid, r.payment_date, r.status, r.amount_due,
+                LEAST((COALESCE(SUM(p.payment_amount), 0) + r.amount_paid), r.amount_due) as total_paid
          FROM receipts r
          JOIN interns i ON r.intern_id = i.id
+         LEFT JOIN payments p ON r.id = p.receipt_id
          ${whereClause}
+         GROUP BY r.id
          ORDER BY r.payment_date DESC
          LIMIT ? OFFSET ?`,
         [...params, pageSize, offset],
@@ -339,11 +347,15 @@ router.get("/:receiptId", async (req, res) => {
 
     const connection = await pool.getConnection()
     try {
+      // Get receipt with total paid from payments table + initial amount_paid (capped at amount_due)
       const [receipts] = await connection.query(
-        `SELECT r.*, i.first_name, i.last_name, i.email, i.phone
+        `SELECT r.*, i.first_name, i.last_name, i.email, i.phone,
+                LEAST((COALESCE(SUM(p.payment_amount), 0) + r.amount_paid), r.amount_due) as total_paid
          FROM receipts r
          JOIN interns i ON r.intern_id = i.id
-         WHERE r.id = ? OR r.receipt_id = ?`,
+         LEFT JOIN payments p ON r.id = p.receipt_id
+         WHERE r.id = ? OR r.receipt_id = ?
+         GROUP BY r.id`,
         [receiptId, receiptId],
       )
 
@@ -368,11 +380,15 @@ router.get("/print/:receiptId", async (req, res) => {
 
     const connection = await pool.getConnection()
     try {
+      // Get receipt with total paid from payments table + initial amount_paid (capped at amount_due)
       const [receipts] = await connection.query(
-        `SELECT r.*, i.first_name, i.last_name, i.email, i.phone
+        `SELECT r.*, i.first_name, i.last_name, i.email, i.phone,
+                LEAST((COALESCE(SUM(p.payment_amount), 0) + r.amount_paid), r.amount_due) as total_paid
          FROM receipts r
          JOIN interns i ON r.intern_id = i.id
-         WHERE r.id = ? OR r.receipt_id = ?`,
+         LEFT JOIN payments p ON r.id = p.receipt_id
+         WHERE r.id = ? OR r.receipt_id = ?
+         GROUP BY r.id`,
         [receiptId, receiptId],
       )
 
@@ -381,6 +397,14 @@ router.get("/print/:receiptId", async (req, res) => {
       }
 
       const receipt = receipts[0]
+      
+      // total_paid now includes initial amount_paid + partial payments, capped at amount_due
+      const totalPaid = receipt.total_paid
+      const balance = receipt.amount_due - totalPaid
+      
+      // Calculate payment status the same way as preview
+      const paymentStatus = balance === 0 ? "Paid in Full" : balance > 0 ? "Pending Payment" : "Overpayment Error"
+      const statusColor = paymentStatus === "Paid in Full" ? "#10b981" : paymentStatus === "Pending Payment" ? "#f59e0b" : "#ef4444"
 
       // Generate QR code
       const qrCodeUrl = await QRCode.toDataURL(receipt.receipt_id)
@@ -396,7 +420,7 @@ router.get("/print/:receiptId", async (req, res) => {
 
       // Header with branding
       doc.fontSize(20).font("Helvetica-Bold").text("ETS NTECH", 40, 40)
-      doc.fontSize(10).font("Helvetica").text("Enterprise Network Technology", 40, 65)
+      doc.fontSize(10).font("Helvetica").text("Enterprise Technology Solutions", 40, 65)
       doc.moveTo(40, 85).lineTo(555, 85).stroke("#667eea")
 
       // Receipt title
@@ -412,7 +436,7 @@ router.get("/print/:receiptId", async (req, res) => {
       doc.font("Helvetica").text(new Date(receipt.payment_date).toLocaleDateString(), 150, detailsY + 25)
 
       doc.font("Helvetica-Bold").text("Status:", 40, detailsY + 50)
-      doc.font("Helvetica").text(receipt.status, 150, detailsY + 50)
+      doc.font("Helvetica").fillColor(statusColor).text(paymentStatus, 150, detailsY + 50).fillColor("#000000")
 
       // Intern Information
       const infoY = 280
@@ -453,6 +477,9 @@ router.get("/print/:receiptId", async (req, res) => {
       doc.font("Helvetica-Bold").text("Payment Method:", 40, descY)
       doc.font("Helvetica").text(receipt.payment_method, 150, descY)
 
+      doc.font("Helvetica-Bold").text("Received By:", 40, descY + 25)
+      doc.font("Helvetica").text(receipt.received_by || "N/A", 150, descY + 25)
+
       // Financial Summary with XAF currency
       const financeY = descY + 60
       doc.fontSize(11).font("Helvetica-Bold").text("FINANCIAL SUMMARY", 40, financeY)
@@ -468,8 +495,7 @@ router.get("/print/:receiptId", async (req, res) => {
 
       doc.font("Helvetica")
       doc.text(`${receipt.amount_due.toLocaleString()} XAF`, 200, financeY + 45)
-      doc.text(`${receipt.amount_paid.toLocaleString()} XAF`, 200, financeY + 70)
-      const balance = receipt.amount_due - receipt.amount_paid
+      doc.text(`${totalPaid.toLocaleString()} XAF`, 200, financeY + 70)
       doc.text(`${balance.toLocaleString()} XAF`, 200, financeY + 95)
 
       // QR Code
@@ -620,6 +646,120 @@ router.put("/update/:receiptId", async (req, res) => {
   } catch (error) {
     console.error("Update error:", error)
     res.status(500).json({ message: "Failed to update receipt" })
+  }
+})
+
+router.get("/payment-history/:receiptId", async (req, res) => {
+  try {
+    const { receiptId } = req.params
+
+    const connection = await pool.getConnection()
+    try {
+      const [payments] = await connection.query(
+        `SELECT p.id, p.payment_amount, p.payment_method, p.payment_date, 
+                p.recorded_at, u.email as recorded_by_email
+         FROM payments p
+         JOIN users u ON p.recorded_by = u.id
+         JOIN receipts r ON p.receipt_id = r.id
+         WHERE r.id = ? OR r.receipt_id = ?
+         ORDER BY p.payment_date ASC`,
+        [receiptId, receiptId],
+      )
+
+      res.json(payments)
+    } finally {
+      connection.release()
+    }
+  } catch (error) {
+    console.error("Error fetching payment history:", error)
+    res.status(500).json({ message: "Failed to fetch payment history" })
+  }
+})
+
+router.post("/add-payment/:receiptId", async (req, res) => {
+  try {
+    const { receiptId } = req.params
+    const { paymentAmount, paymentMethod, paymentDate, notes, userId } = req.body
+
+    if (!paymentAmount || !paymentMethod || !paymentDate) {
+      return res.status(400).json({ message: "Missing required fields" })
+    }
+
+    if (paymentAmount <= 0) {
+      return res.status(400).json({ message: "Payment amount must be greater than 0" })
+    }
+
+    const connection = await pool.getConnection()
+    try {
+      await connection.beginTransaction()
+
+      // Get receipt details with total paid including initial amount_paid
+      const [receipts] = await connection.query(
+        `SELECT r.*, (COALESCE(SUM(p.payment_amount), 0) + r.amount_paid) as total_paid
+         FROM receipts r
+         LEFT JOIN payments p ON r.id = p.receipt_id
+         WHERE r.id = ? OR r.receipt_id = ?
+         GROUP BY r.id`,
+        [receiptId, receiptId],
+      )
+
+      if (receipts.length === 0) {
+        return res.status(404).json({ message: "Receipt not found" })
+      }
+
+      const receipt = receipts[0]
+      const totalPaid = receipt.total_paid + paymentAmount
+      const remainingBalance = receipt.amount_due - totalPaid
+
+      // Validate overpayment
+      if (remainingBalance < 0) {
+        await connection.rollback()
+        connection.release()
+        return res.status(400).json({
+          message: `Overpayment error. Remaining balance is ${Math.abs(remainingBalance).toLocaleString()} XAF. You can only pay up to ${(receipt.amount_due - receipt.total_paid).toLocaleString()} XAF.`,
+        })
+      }
+
+      // Insert payment record
+      await connection.query(
+        `INSERT INTO payments (receipt_id, payment_amount, payment_method, payment_date, recorded_by, notes)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [receipt.id, paymentAmount, paymentMethod, paymentDate, userId, notes || null],
+      )
+
+      // Update receipt payment status
+      const newStatus = remainingBalance === 0 ? "Paid in Full" : "Pending Payment"
+      await connection.query(
+        `UPDATE receipts 
+         SET payment_status = ?, initial_payment_recorded = TRUE
+         WHERE id = ?`,
+        [newStatus, receipt.id],
+      )
+
+      // Create audit log
+      await connection.query(
+        `INSERT INTO receipt_audit_logs (receipt_id, action, action_by, new_values)
+         VALUES (?, 'PARTIAL_PAYMENT', ?, ?)`,
+        [receipt.id, userId, JSON.stringify({ payment_amount: paymentAmount, new_status: newStatus })],
+      )
+
+      await connection.commit()
+
+      res.status(201).json({
+        message: "Partial payment recorded successfully",
+        newStatus,
+        remainingBalance,
+        totalPaid,
+      })
+    } catch (error) {
+      await connection.rollback()
+      throw error
+    } finally {
+      connection.release()
+    }
+  } catch (error) {
+    console.error("Error recording partial payment:", error)
+    res.status(500).json({ message: "Failed to record partial payment" })
   }
 })
 

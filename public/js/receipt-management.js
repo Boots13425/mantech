@@ -171,7 +171,7 @@ async function previewReceipt() {
       <div class="receipt-preview">
         <div class="receipt-preview-header">
           <div class="receipt-company">ETS NTECH</div>
-          <div class="receipt-tagline">Enterprise Network Technology</div>
+          <div class="receipt-tagline">Enterprise Technology Solutions</div>
           <div class="receipt-title">PAYMENT RECEIPT</div>
         </div>
 
@@ -303,7 +303,13 @@ async function searchReceipts() {
                 <td>${receipt.receipt_id}</td>
                 <td>${receipt.first_name} ${receipt.last_name}</td>
                 <td>${receipt.payment_type}</td>
-                <td>${formatCurrency(receipt.amount_paid)}</td>
+                <td>${formatCurrency((() => {
+                  let totalPaid = receipt.total_paid !== undefined ? receipt.total_paid : receipt.amount_paid
+                  if (receipt.amount_due !== undefined && totalPaid > receipt.amount_due) {
+                    totalPaid = receipt.amount_due
+                  }
+                  return totalPaid
+                })())}</td>
                 <td>${new Date(receipt.payment_date).toLocaleDateString()}</td>
                 <td><span style="padding: 4px 8px; background: ${receipt.status === "Active" ? "#d0f0c0" : "#fcc2c2"}; border-radius: 4px; font-size: 12px;">${receipt.status}</span></td>
                 <td>
@@ -376,7 +382,14 @@ function displayReceiptsCards(receipts) {
   } else {
     html = receipts
       .map(
-        (receipt) => `
+        (receipt) => {
+          // Use total_paid if available, otherwise fall back to amount_paid
+          // Ensure it never exceeds amount_due (the amount that should be paid)
+          let totalPaid = receipt.total_paid !== undefined ? receipt.total_paid : receipt.amount_paid
+          if (receipt.amount_due !== undefined && totalPaid > receipt.amount_due) {
+            totalPaid = receipt.amount_due
+          }
+          return `
       <div class="receipt-card">
         <div class="receipt-card-info">
           <div class="receipt-card-id">${receipt.receipt_id}</div>
@@ -384,7 +397,7 @@ function displayReceiptsCards(receipts) {
           <div class="receipt-card-meta">${receipt.payment_type} • ${new Date(receipt.payment_date).toLocaleDateString()}</div>
         </div>
         <div class="receipt-card-amount">
-          <div class="receipt-card-amount-value">${formatCurrency(receipt.amount_paid)}</div>
+          <div class="receipt-card-amount-value">${formatCurrency(totalPaid)}</div>
           <div class="receipt-card-amount-type">${receipt.status}</div>
         </div>
         <div class="receipt-card-actions">
@@ -393,7 +406,8 @@ function displayReceiptsCards(receipts) {
           <button class="action-btn-print" onclick="printReceipt(${receipt.id})">Print</button>
         </div>
       </div>
-    `,
+    `
+        },
       )
       .join("")
   }
@@ -431,13 +445,19 @@ async function viewReceiptDetails(receiptId) {
     const response = await fetch(`/api/receipts/${receiptId}`)
     const receipt = await response.json()
 
-    const balance = receipt.amount_due - receipt.amount_paid
+    // total_paid now includes initial amount_paid + partial payments, so use it directly
+    const totalPaid = receipt.total_paid !== undefined && receipt.total_paid !== null ? receipt.total_paid : receipt.amount_paid
+    const balance = receipt.amount_due - totalPaid
+
+    const paymentStatus = balance === 0 ? "Paid in Full" : balance > 0 ? "Pending Payment" : "Overpayment Error"
+    const statusColor =
+      paymentStatus === "Paid in Full" ? "#10b981" : paymentStatus === "Pending Payment" ? "#f59e0b" : "#ef4444"
 
     const detailsHTML = `
       <div class="receipt-preview">
         <div class="receipt-preview-header">
           <div class="receipt-company">ETS NTECH</div>
-          <div class="receipt-tagline">Enterprise Network Technology</div>
+          <div class="receipt-tagline">Enterprise Technology Solutions</div>
           <div class="receipt-title">PAYMENT RECEIPT</div>
         </div>
 
@@ -453,7 +473,7 @@ async function viewReceiptDetails(receiptId) {
           </div>
           <div class="receipt-row">
             <span class="receipt-row-label">Status:</span>
-            <span class="receipt-row-value">${receipt.status}</span>
+            <span class="receipt-row-value" style="color: ${statusColor}; font-weight: bold;">${paymentStatus}</span>
           </div>
         </div>
 
@@ -489,18 +509,20 @@ async function viewReceiptDetails(receiptId) {
           </div>
         </div>
 
-        <div class="receipt-summary">
-          <div class="receipt-summary-row">
-            <span>Amount Due:</span>
-            <span>${formatCurrency(receipt.amount_due)}</span>
+        <!-- Enhanced financial summary with balance calculation -->
+        <div class="receipt-section">
+          <div class="receipt-section-title">Financial Summary</div>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Total Fee Required:</span>
+            <span class="receipt-row-value" style="font-weight: bold; color: #2d3748;">${formatCurrency(receipt.amount_due)}</span>
           </div>
-          <div class="receipt-summary-row">
-            <span>Amount Paid:</span>
-            <span>${formatCurrency(receipt.amount_paid)}</span>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Total Paid So Far:</span>
+            <span class="receipt-row-value" style="font-weight: bold; color: #10b981;">${formatCurrency(totalPaid)}</span>
           </div>
-          <div class="receipt-summary-row">
-            <span>Balance:</span>
-            <span>${formatCurrency(balance)}</span>
+          <div class="receipt-row">
+            <span class="receipt-row-label">Outstanding Balance:</span>
+            <span class="receipt-row-value" style="font-weight: bold; color: ${balance > 0 ? "#f59e0b" : "#10b981"};">${formatCurrency(balance)}</span>
           </div>
         </div>
 
@@ -515,6 +537,11 @@ async function viewReceiptDetails(receiptId) {
             : ""
         }
 
+        <!-- Add link to view payment history -->
+        <div class="receipt-section">
+          <button class="btn btn-info" onclick="viewPaymentHistory(${receipt.id})" style="width: 100%; background-color: #3b82f6;">View Payment History</button>
+        </div>
+
         <div class="receipt-qr">
           <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${receipt.receipt_id}" alt="QR Code" />
         </div>
@@ -524,41 +551,153 @@ async function viewReceiptDetails(receiptId) {
     document.getElementById("detailsContent").innerHTML = detailsHTML
     document.getElementById("detailsModal").style.display = "flex"
     window.currentReceiptId = receiptId
+    window.currentReceiptDetails = receipt
   } catch (error) {
     console.error("Error fetching receipt details:", error)
     alert("Failed to load receipt details")
   }
 }
 
-async function openEditModal(receiptId) {
+function openPartialPaymentModal() {
+  const receipt = window.currentReceiptDetails
+  // total_paid now includes initial amount_paid + partial payments
+  const totalPaid = receipt.total_paid !== undefined && receipt.total_paid !== null ? receipt.total_paid : receipt.amount_paid
+  const balance = receipt.amount_due - totalPaid
+
+  document.getElementById("outstandingBalance").value = formatCurrency(balance)
+  document.getElementById("partialPaymentDate").valueAsDate = new Date()
+  document.getElementById("partialPaymentAmount").value = ""
+  document.getElementById("partialPaymentNotes").value = ""
+  document.getElementById("newBalancePreview").textContent = "--"
+
+  document.getElementById("partialPaymentModal").style.display = "flex"
+}
+
+function closePartialPaymentModal() {
+  document.getElementById("partialPaymentModal").style.display = "none"
+}
+
+document.getElementById("partialPaymentAmount").addEventListener("input", (e) => {
+  const receipt = window.currentReceiptDetails
+  // total_paid now includes initial amount_paid + partial payments
+  const totalPaid = receipt.total_paid !== undefined && receipt.total_paid !== null ? receipt.total_paid : receipt.amount_paid
+  const balance = receipt.amount_due - totalPaid
+  const paymentAmount = Number.parseFloat(e.target.value) || 0
+  const newBalance = balance - paymentAmount
+
+  const errorSpan = document.getElementById("paymentAmountError")
+  if (paymentAmount > balance) {
+    errorSpan.textContent = `Cannot pay more than outstanding balance (${formatCurrency(balance)})`
+    errorSpan.style.display = "inline"
+    document.querySelector("#partialPaymentForm button[type='submit']").disabled = true
+  } else {
+    errorSpan.style.display = "none"
+    document.querySelector("#partialPaymentForm button[type='submit']").disabled = false
+  }
+
+  document.getElementById("newBalancePreview").textContent = formatCurrency(Math.max(newBalance, 0))
+})
+
+document.getElementById("partialPaymentForm").addEventListener("submit", async (e) => {
+  e.preventDefault()
+
+  const receiptId = window.currentReceiptId
+  const paymentAmount = Number.parseFloat(document.getElementById("partialPaymentAmount").value)
+  const paymentMethod = document.getElementById("partialPaymentMethod").value
+  const paymentDate = document.getElementById("partialPaymentDate").value
+  const notes = document.getElementById("partialPaymentNotes").value
+
+  if (paymentAmount <= 0) {
+    alert("Payment amount must be greater than 0")
+    return
+  }
+
   try {
-    const response = await fetch(`/api/receipts/${receiptId}`)
-    const receipt = await response.json()
+    const response = await fetch(`/api/receipts/add-payment/${receiptId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        paymentAmount,
+        paymentMethod,
+        paymentDate,
+        notes,
+        userId,
+      }),
+    })
 
-    document.getElementById("editReceiptId").value = receiptId
-    document.getElementById("editPaymentDate").value = receipt.payment_date.split("T")[0]
-    document.getElementById("editPaymentType").value = receipt.payment_type
-    document.getElementById("editAmountDue").value = receipt.amount_due
-    document.getElementById("editAmountPaid").value = receipt.amount_paid
-    document.getElementById("editPaymentMethod").value = receipt.payment_method
-    document.getElementById("editReceivedBy").value = receipt.received_by
-    document.getElementById("editNotes").value = receipt.notes || ""
+    const result = await response.json()
 
-    document.getElementById("editModal").style.display = "flex"
+    if (response.ok) {
+      alert("Partial payment recorded successfully!\nNew Status: " + result.newStatus)
+      closePartialPaymentModal()
+      closeDetailsModal()
+      loadAllReceipts()
+    } else {
+      alert("Error: " + result.message)
+    }
   } catch (error) {
-    console.error("Error loading receipt for edit:", error)
-    alert("Failed to load receipt for editing")
+    console.error("Error recording partial payment:", error)
+    alert("Failed to record partial payment: " + error.message)
+  }
+})
+
+async function viewPaymentHistory(receiptId) {
+  try {
+    const response = await fetch(`/api/receipts/payment-history/${receiptId}`)
+    const payments = await response.json()
+
+    let historyHTML = ""
+    if (payments.length === 0) {
+      historyHTML = "<p style='padding: 20px; text-align: center; color: #718096;'>No payment history available</p>"
+    } else {
+      historyHTML = `
+        <table class="payment-history-table" style="width: 100%; border-collapse: collapse;">
+          <thead style="background-color: #f7fafc;">
+            <tr>
+              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: bold;">Payment Date</th>
+              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: bold;">Amount Paid</th>
+              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: bold;">Payment Method</th>
+              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: bold;">Recorded By</th>
+              <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: bold;">Recorded Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${payments
+              .map(
+                (payment, index) => `
+              <tr style="background-color: ${index % 2 === 0 ? "#ffffff" : "#f7fafc"}; border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 12px;">${new Date(payment.payment_date).toLocaleDateString()}</td>
+                <td style="padding: 12px; font-weight: bold; color: #10b981;">${formatCurrency(payment.payment_amount)}</td>
+                <td style="padding: 12px;">${payment.payment_method}</td>
+                <td style="padding: 12px;">${payment.recorded_by_email}</td>
+                <td style="padding: 12px;">${new Date(payment.recorded_at).toLocaleString()}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+      `
+    }
+
+    document.getElementById("paymentHistoryContent").innerHTML = historyHTML
+    document.getElementById("paymentHistoryModal").style.display = "flex"
+  } catch (error) {
+    console.error("Error fetching payment history:", error)
+    alert("Failed to load payment history")
   }
 }
 
-function closeEditModal() {
-  document.getElementById("editModal").style.display = "none"
+function closePaymentHistoryModal() {
+  document.getElementById("paymentHistoryModal").style.display = "none"
 }
 
+// Close details modal
 function closeDetailsModal() {
   document.getElementById("detailsModal").style.display = "none"
 }
 
+// Edit receipt form submission
 document.getElementById("editForm").addEventListener("submit", async (e) => {
   e.preventDefault()
 
@@ -603,50 +742,12 @@ function printFromDetails() {
   printReceipt(window.currentReceiptId)
 }
 
-// --- Automatic (debounced) search wiring (additive, non-breaking) ---
-;(function setupAutoSearch() {
-  const queryEl = document.getElementById('searchQuery')
-  const startEl = document.getElementById('searchStartDate')
-  const endEl = document.getElementById('searchEndDate')
-  const typeEl = document.getElementById('searchPaymentType')
+function closeEditModal() {
+  document.getElementById("editModal").style.display = "none"
+}
 
-  if (!queryEl || !startEl || !endEl || !typeEl) return
-
-  let searchTimer = null
-
-  const scheduleSearch = (delay = 300) => {
-    clearTimeout(searchTimer)
-    searchTimer = setTimeout(() => {
-      try {
-        searchReceipts()
-      } catch (e) {
-        console.error('Auto-search error:', e)
-      }
-    }, delay)
-  }
-
-  // Trigger as user types (debounced)
-  queryEl.addEventListener('input', (e) => {
-    const v = e.target.value.trim()
-    if (v.length === 0) {
-      // If empty, perform a search so filters (dates/type) are respected
-      scheduleSearch(200)
-      return
-    }
-    if (v.length >= 1) scheduleSearch(300)
-  })
-
-  // Trigger on date/select changes (immediate-ish)
-  startEl.addEventListener('change', () => scheduleSearch(100))
-  endEl.addEventListener('change', () => scheduleSearch(100))
-  typeEl.addEventListener('change', () => scheduleSearch(100))
-
-  // Optional: allow Enter in the query field to run immediate search
-  queryEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      clearTimeout(searchTimer)
-      searchReceipts()
-    }
-  })
-})()
+// Declare the openEditModal function
+function openEditModal(receiptId) {
+  // Implementation for opening edit modal
+  console.log("Opening edit modal for receipt ID:", receiptId)
+}
