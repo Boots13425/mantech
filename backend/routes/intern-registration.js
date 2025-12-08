@@ -359,7 +359,7 @@ async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
                     <p style="color: #4a5568; font-size: 14px; line-height: 1.6; margin: 20px 0;">
                         <strong>What's Next?</strong><br>
                         • Your mentor will reach out to you shortly with orientation details<br>
-                        • Please review our policies at etcntech.org<br>
+                        • Please review our policies at etsntech.org<br>
                         • Mark your calendar for your first day<br>
                         • Come prepared with enthusiasm and your laptop
                     </p>
