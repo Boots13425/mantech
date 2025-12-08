@@ -229,7 +229,7 @@ async function generateReceiptPDF(internData) {
       // Build PDF content
       // Header
       doc.fontSize(16).font("Helvetica-Bold").text("ETS NTECH", 40, 40)
-      doc.fontSize(10).font("Helvetica").text("Enterprise Technology Solutions", 40, 60)
+      doc.fontSize(10).font("Helvetica").text("Enterprise Network Technology", 40, 60)
 
       // Receipt Title
       doc.moveTo(40, 90).lineTo(555, 90).stroke()
@@ -359,7 +359,7 @@ async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
                     <p style="color: #4a5568; font-size: 14px; line-height: 1.6; margin: 20px 0;">
                         <strong>What's Next?</strong><br>
                         • Your mentor will reach out to you shortly with orientation details<br>
-                        • Please review our policies at etcntech.org<br>
+                        • Please review our policies at etsntech.org<br>
                         • Mark your calendar for your first day<br>
                         • Come prepared with enthusiasm and your laptop
                     </p>
