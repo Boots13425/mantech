@@ -1,6 +1,70 @@
 // Form Submission and Validation
 let isSubmitting = false
 
+// Toast Notification System
+class Toast {
+  constructor(type = 'info', title = '', message = '', duration = 5000) {
+    this.type = type
+    this.title = title
+    this.message = message
+    this.duration = duration
+    this.id = Date.now()
+  }
+
+  show() {
+    const container = document.getElementById('toastContainer')
+    if (!container) return
+
+    const toastEl = document.createElement('div')
+    toastEl.className = `toast ${this.type}`
+    toastEl.setAttribute('role', 'alert')
+    
+    let iconSVG = ''
+    switch(this.type) {
+      case 'success':
+        iconSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
+        break
+      case 'error':
+        iconSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
+        break
+      case 'warning':
+        iconSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3.05h16.94a2 2 0 0 0 1.71-3.05L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
+        break
+      case 'info':
+      default:
+        iconSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+    }
+
+    toastEl.innerHTML = `
+      <div class="toast-icon">${iconSVG}</div>
+      <div class="toast-content">
+        ${this.title ? `<p class="toast-title">${this.title}</p>` : ''}
+        <p class="toast-message">${this.message}</p>
+      </div>
+      <button class="toast-close" onclick="document.getElementById('toast-${this.id}').remove()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    `
+    toastEl.id = `toast-${this.id}`
+
+    container.appendChild(toastEl)
+
+    // Auto remove after duration
+    if (this.duration > 0) {
+      setTimeout(() => {
+        const el = document.getElementById(`toast-${this.id}`)
+        if (el) {
+          el.classList.add('removing')
+          setTimeout(() => el.remove(), 300)
+        }
+      }, this.duration)
+    }
+  }
+}
+
 async function handleFormSubmit(event) {
   event.preventDefault()
 
@@ -44,6 +108,7 @@ async function handleFormSubmit(event) {
 
   isSubmitting = true
   submitBtn.disabled = true
+  submitBtn.setAttribute('aria-busy', 'true')
   submitBtnText.style.display = "none"
   submitSpinner.style.display = "block"
 
@@ -63,19 +128,30 @@ async function handleFormSubmit(event) {
       // Show success modal
       document.getElementById("successName").textContent = `${formData.firstName} ${formData.lastName}`
       document.getElementById("successEmail").textContent = formData.email
+      
+      // Show success toast
+      new Toast('success', 'Registration Successful!', 'The intern has been registered. A receipt will be sent to their email shortly.', 4000).show()
+      
       showSuccessModal()
       document.getElementById("registrationForm").reset()
     } else {
-      // Show error modal
-      showErrorModal(result.message || "Failed to register intern. Please try again.")
+      // Show error toast with specific error message
+      const errorTitle = 'Registration Failed'
+      const errorMessage = result.message || "Failed to register intern. Please try again."
+      
+      new Toast('error', errorTitle, errorMessage, 6000).show()
+      showErrorModal(errorMessage)
     }
   } catch (error) {
     console.error("Registration error:", error)
-    showErrorModal("An error occurred. Please check your connection and try again.")
+    const errorMsg = "An error occurred. Please check your connection and try again."
+    new Toast('error', 'Connection Error', errorMsg, 6000).show()
+    showErrorModal(errorMsg)
   } finally {
     // Reset button state
     isSubmitting = false
     submitBtn.disabled = false
+    submitBtn.removeAttribute('aria-busy')
     submitBtnText.style.display = "inline"
     submitSpinner.style.display = "none"
   }
@@ -100,9 +176,10 @@ function validateForm(data) {
     errors.email = "Please enter a valid email address"
   }
 
-  // Phone validation
-  if (!data.phone || data.phone.length < 10) {
-    errors.phone = "Please enter a valid phone number"
+  // Phone validation - Accept formats: (123) 456-7890, 123-456-7890, 1234567890, +1-123-456-7890
+  const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/
+  if (!data.phone || !phoneRegex.test(data.phone.replace(/\s/g, ""))) {
+    errors.phone = "Please enter a valid phone number (e.g., (123) 456-7890, 123-456-7890, or 1234567890)"
   }
 
   // School validation
@@ -149,16 +226,55 @@ function validateForm(data) {
   // Display errors
   displayErrors(errors)
 
+  // Show error toast if there are validation errors
+  if (Object.keys(errors).length > 0) {
+    const errorCount = Object.keys(errors).length
+    const errorSummary = errorCount === 1 
+      ? Object.values(errors)[0] 
+      : `Please fix ${errorCount} validation error(s)`
+    new Toast('warning', 'Validation Error', errorSummary, 5000).show()
+  }
+
   return Object.keys(errors).length === 0
 }
 
 function displayErrors(errors) {
+  // Find the first field with an error
+  let firstErrorField = null
+  
   Object.keys(errors).forEach((fieldName) => {
     const errorElement = document.getElementById(`${fieldName}Error`)
+    const inputElement = document.getElementById(fieldName)
+    
     if (errorElement) {
       errorElement.textContent = errors[fieldName]
     }
+    
+    // Add error styling to the input field
+    if (inputElement) {
+      inputElement.classList.add('input-error')
+      
+      // Remove error styling when user starts typing
+      inputElement.addEventListener('input', function() {
+        this.classList.remove('input-error')
+        const error = document.getElementById(`${fieldName}Error`)
+        if (error) error.textContent = ''
+      }, { once: true })
+      
+      // Store reference to first error field
+      if (!firstErrorField) {
+        firstErrorField = inputElement
+      }
+    }
   })
+
+  // Scroll to the first error field if any errors exist
+  if (firstErrorField) {
+    setTimeout(() => {
+      firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" })
+      firstErrorField.focus()
+    }, 100)
+  }
 }
 
 function clearErrors() {

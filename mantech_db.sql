@@ -1,13 +1,14 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.0
+-- version 5.0.1
 -- https://www.phpmyadmin.net/
 --
--- Host: 127.0.0.1:3306
--- Generation Time: Dec 06, 2025 at 10:22 PM
--- Server version: 10.4.27-MariaDB
--- PHP Version: 8.0.25
+-- Host: 127.0.0.1
+-- Generation Time: Dec 09, 2025 at 09:25 PM
+-- Server version: 10.4.11-MariaDB
+-- PHP Version: 7.4.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
 START TRANSACTION;
 SET time_zone = "+00:00";
 
@@ -33,7 +34,7 @@ CREATE TABLE `attendance` (
   `attendance_date` date NOT NULL,
   `status` enum('present','absent','late') DEFAULT 'present',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -50,7 +51,7 @@ CREATE TABLE `budget` (
   `fiscal_year` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -68,7 +69,7 @@ CREATE TABLE `events` (
   `status` enum('planned','ongoing','completed') DEFAULT 'planned',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -97,7 +98,7 @@ CREATE TABLE `interns` (
   `mentor` varchar(255) DEFAULT NULL,
   `skills` text DEFAULT NULL,
   `notes` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `interns`
@@ -107,7 +108,9 @@ INSERT INTO `interns` (`id`, `first_name`, `last_name`, `email`, `phone`, `date_
 (10, 'test', 'shield', 'fongongserge21@gmail.com', '+237680600811', NULL, '2025-12-02', 'active', '2025-12-02 09:35:10', '2025-12-02 09:35:10', 'FET', 'bachelors in computer engineering', '3rd Year', NULL, 'Software Development', '2025-12-09', '2025-12-16', NULL, 'balling', NULL),
 (11, 'lemuel', 'fineboy', 'lemuelmbunwe@gmail.com', '+237680600811', NULL, '2025-12-04', 'active', '2025-12-04 15:56:37', '2025-12-04 15:56:37', 'FET', 'bachelors in computer engineering', '3rd Year', NULL, 'Software Development', '2025-12-11', '2025-12-25', NULL, 'dancing', 'he lied about his skill'),
 (12, 'fong', 'serg', 'serge@gmail.com', '680600811', NULL, '2025-12-06', 'active', '2025-12-06 08:28:03', '2025-12-06 08:28:03', 'FET', 'bachelors in computer engineering', '4th Year', NULL, 'Network Administration', '2025-12-07', '2025-12-16', NULL, 'talking', NULL),
-(13, 'sergio rakitin', 'kitchens', 'nwantolyben@gmail.com', '237678366438', NULL, '2025-12-06', 'active', '2025-12-06 09:41:49', '2025-12-06 09:41:49', 'FET', 'bachelors in computer engineering', '3rd Year', '1.65', 'Software Development', '2025-12-06', '2026-07-06', 'Lemuel Fineboy', 'nothing', 'nothing');
+(13, 'sergio rakitin', 'kitchens', 'nwantolyben@gmail.com', '237678366438', NULL, '2025-12-06', 'active', '2025-12-06 09:41:49', '2025-12-06 09:41:49', 'FET', 'bachelors in computer engineering', '3rd Year', '1.65', 'Software Development', '2025-12-06', '2026-07-06', 'Lemuel Fineboy', 'nothing', 'nothing'),
+(14, 'Uchon', 'Precious', 'preciousafayam@gmail.com', '+237 650615920', NULL, '2025-12-09', 'active', '2025-12-09 10:47:52', '2025-12-09 10:47:52', 'YIBS', 'Bachelor in Computer Engineering', '2nd Year', '3.50', 'Software Development', '2025-12-09', '2026-02-09', 'Sir Lemuel', 'Tech enthusiast', 'Thrilled to be part of you all'),
+(15, 'Uchon', 'Jenifer', 'jeniferakiakum@gmail.com', '237683253540', NULL, '2025-12-09', 'active', '2025-12-09 11:27:38', '2025-12-09 11:27:38', 'YIBS', 'Bachelor in Computer Engineering', '2nd Year', '3.50', 'Software Development', '2025-12-09', '2026-02-09', 'Sir Lemuel', 'tech enthusiast', 'thanks for the opportunity');
 
 -- --------------------------------------------------------
 
@@ -136,7 +139,7 @@ CREATE TABLE `receipts` (
   `void_reason` varchar(255) DEFAULT NULL,
   `voided_at` timestamp NULL DEFAULT NULL,
   `voided_by` int(11) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `receipts`
@@ -160,7 +163,7 @@ CREATE TABLE `receipt_audit_logs` (
   `old_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`old_values`)),
   `new_values` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`new_values`)),
   `notes` text DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `receipt_audit_logs`
@@ -183,7 +186,7 @@ CREATE TABLE `users` (
   `full_name` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
 -- Dumping data for table `users`
@@ -284,7 +287,7 @@ ALTER TABLE `events`
 -- AUTO_INCREMENT for table `interns`
 --
 ALTER TABLE `interns`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `receipts`
