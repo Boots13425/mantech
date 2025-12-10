@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - MANTech</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/settings.css">
+</head>
+<body>
+    <div class="settings-container">
+        <!-- Header -->
+        <div class="settings-header">
+            <button class="back-btn" onclick="window.location.href='dashboard.html'">
+                <span>← Back to Dashboard</span>
+            </button>
+            <h1>Settings</h1>
+            <p class="header-subtitle">Manage your account, platform, and security settings</p>
+        </div>
+
+        <!-- Settings Navigation -->
+        <div class="settings-wrapper">
+            <aside class="settings-sidebar">
+                <div class="settings-nav">
+                    <button class="settings-nav-btn active" data-section="admin-account">
+                        <span class="nav-icon">👤</span>
+                        <span>Admin Account</span>
+                    </button>
+                    <button class="settings-nav-btn" data-section="platform">
+                        <span class="nav-icon">⚙️</span>
+                        <span>Platform Settings</span>
+                    </button>
+                    <button class="settings-nav-btn" data-section="user-management">
+                        <span class="nav-icon">👥</span>
+                        <span>User Management</span>
+                    </button>
+                    <button class="settings-nav-btn" data-section="data-security">
+                        <span class="nav-icon">🔒</span>
+                        <span>Data & Security</span>
+                    </button>
+                </div>
+            </aside>
+
+            <main class="settings-content">
+                <!-- Admin Account Settings -->
+                <section id="admin-account" class="settings-section active">
+                    <div class="section-header">
+                        <h2>Admin Account Settings</h2>
+                        <p>Manage your admin account credentials</p>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Account Information</h3>
+                        <div class="form-group">
+                            <label for="adminEmail">Email Address</label>
+                            <div class="input-group">
+                                <input type="email" id="adminEmail" class="form-input" placeholder="admin@example.com" />
+                                <button class="btn btn-secondary" onclick="editEmail()">Edit</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="adminName">Admin Name</label>
+                            <div class="input-group">
+                                <input type="text" id="adminName" class="form-input" placeholder="Admin Name" />
+                                <button class="btn btn-secondary" onclick="editName()">Edit</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="adminRole">Role</label>
+                            <input type="text" id="adminRole" class="form-input" value="System Administrator" readonly />
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Security</h3>
+                        <div class="form-group">
+                            <label>Change Password</label>
+                            <p class="help-text">Update your password to keep your account secure</p>
+                            <button class="btn btn-primary" onclick="openChangePasswordModal()">Change Password</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Two-Factor Authentication</label>
+                            <p class="help-text">Add an extra layer of security to your account</p>
+                            <button class="btn btn-primary" onclick="enableTwoFactor()">Enable 2FA</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Active Sessions</label>
+                            <p class="help-text">View and manage your active sessions</p>
+                            <button class="btn btn-secondary" onclick="viewActiveSessions()">View Sessions</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Platform Settings -->
+                <section id="platform" class="settings-section">
+                    <div class="section-header">
+                        <h2>Platform Settings</h2>
+                        <p>Configure global platform preferences</p>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Theme & Appearance</h3>
+                        <div class="form-group">
+                            <label>Color Theme</label>
+                            <div class="theme-selector">
+                                <div class="theme-option" onclick="setTheme('light')">
+                                    <div class="theme-preview theme-light"></div>
+                                    <span>Light Mode</span>
+                                    <input type="radio" name="theme" value="light" />
+                                </div>
+                                <div class="theme-option" onclick="setTheme('dark')">
+                                    <div class="theme-preview theme-dark"></div>
+                                    <span>Dark Mode</span>
+                                    <input type="radio" name="theme" value="dark" />
+                                </div>
+                                <div class="theme-option" onclick="setTheme('auto')">
+                                    <div class="theme-preview theme-auto"></div>
+                                    <span>Auto (System)</span>
+                                    <input type="radio" name="theme" value="auto" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="compactMode" onchange="toggleCompactMode()" />
+                                <span>Compact Mode</span>
+                            </label>
+                            <p class="help-text">Reduce spacing and font sizes for a more compact view</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">System Preferences</h3>
+                        <div class="form-group">
+                            <label for="timezone">Timezone</label>
+                            <select id="timezone" class="form-input">
+                                <option value="UTC">UTC</option>
+                                <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+                                <option value="Africa/Johannesburg">Africa/Johannesburg (SAST)</option>
+                                <option value="Africa/Cairo">Africa/Cairo (EET)</option>
+                                <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dateFormat">Date Format</label>
+                            <select id="dateFormat" class="form-input" onchange="savePlatformSettings()">
+                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="notificationsEnabled" onchange="savePlatformSettings()" />
+                                <span>Enable Notifications</span>
+                            </label>
+                            <p class="help-text">Receive notifications for important system events</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- User Management -->
+                <section id="user-management" class="settings-section">
+                    <div class="section-header">
+                        <h2>User Management</h2>
+                        <p>Control admin and restricted user access</p>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Add New Admin User</h3>
+                        <form class="settings-form" onsubmit="addAdminUser(event)">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="newAdminEmail">Email Address</label>
+                                    <input type="email" id="newAdminEmail" class="form-input" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="newAdminName">Full Name</label>
+                                    <input type="text" id="newAdminName" class="form-input" required />
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="adminPermission">Permission Level</label>
+                                    <select id="adminPermission" class="form-input" required>
+                                        <option value="full">Full Access</option>
+                                        <option value="limited">Limited Access</option>
+                                        <option value="view">View Only</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="adminStatus">Status</label>
+                                    <select id="adminStatus" class="form-input" required>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Add Admin User</button>
+                        </form>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Active Admin Users</h3>
+                        <div id="adminUsersList" class="users-list">
+                            <!-- Admin users will be listed here -->
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Student/Restricted Users</h3>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="allowStudentDashboard" onchange="saveUserSettings()" />
+                                <span>Allow Students to View Dashboard</span>
+                            </label>
+                            <p class="help-text">Grants students read-only access to dashboard and reports</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="allowStudentAttendance" onchange="saveUserSettings()" />
+                                <span>Allow Students to View Attendance</span>
+                            </label>
+                            <p class="help-text">Grants students access to their own attendance records</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="allowStudentReceipts" onchange="saveUserSettings()" />
+                                <span>Allow Students to View Receipts</span>
+                            </label>
+                            <p class="help-text">Grants students access to their payment receipts</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Data & Security -->
+                <section id="data-security" class="settings-section">
+                    <div class="section-header">
+                        <h2>Data & Security</h2>
+                        <p>Backup, restore, and manage data security</p>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Data Backup</h3>
+                        <p class="help-text">Regular backups ensure your data is safe and recoverable</p>
+
+                        <div class="backup-info">
+                            <div class="info-item">
+                                <span class="label">Last Backup:</span>
+                                <span class="value" id="lastBackupTime">Never</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Backup Status:</span>
+                                <span class="value status-active" id="backupStatus">Scheduled</span>
+                            </div>
+                        </div>
+
+                        <div class="backup-actions">
+                            <button class="btn btn-primary" onclick="performBackup()">
+                                <span>💾</span> Create Backup Now
+                            </button>
+                            <button class="btn btn-secondary" onclick="downloadBackup()">
+                                <span>⬇️</span> Download Backup
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Data Restore</h3>
+                        <p class="help-text">Restore your system from a previous backup</p>
+
+                        <div class="form-group">
+                            <label>Select Backup to Restore</label>
+                            <select id="backupSelect" class="form-input">
+                                <option value="">-- Select a backup --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="restoreFile">Or Upload Backup File</label>
+                            <input type="file" id="restoreFile" class="form-input" accept=".backup,.zip,.sql" />
+                        </div>
+
+                        <button class="btn btn-warning" onclick="restoreFromBackup()">Restore from Backup</button>
+                        <p class="help-text warning">Warning: Restoring will overwrite all current data. This action cannot be undone.</p>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Data Audit Log</h3>
+                        <p class="help-text">Review all data changes and system activities for compliance</p>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="auditStartDate">From Date</label>
+                                <input type="date" id="auditStartDate" class="form-input" />
+                            </div>
+                            <div class="form-group">
+                                <label for="auditEndDate">To Date</label>
+                                <input type="date" id="auditEndDate" class="form-input" />
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="exportAuditLog()">Export Audit Log</button>
+                        <button class="btn btn-secondary" onclick="viewAuditLog()">View Audit Log</button>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">Data Export</h3>
+                        <p class="help-text">Export all your data for archival or compliance purposes</p>
+
+                        <div class="export-options">
+                            <button class="btn btn-secondary" onclick="exportData('interns')">
+                                <span>📊</span> Export Interns Data
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportData('attendance')">
+                                <span>📋</span> Export Attendance
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportData('receipts')">
+                                <span>💳</span> Export Receipts
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportData('all')">
+                                <span>📦</span> Export All Data
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3 class="card-title">System Security</h3>
+                        <p class="help-text">Monitor and manage security settings</p>
+
+                        <div class="security-info">
+                            <div class="info-item">
+                                <span class="label">SSL Certificate:</span>
+                                <span class="value status-active">Valid ✓</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Database Encryption:</span>
+                                <span class="value status-active">Enabled ✓</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Last Security Audit:</span>
+                                <span class="value" id="lastSecurityAudit">30 days ago</span>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-secondary" onclick="runSecurityCheck()">Run Security Check</button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change Password</h2>
+                <button class="close-btn" onclick="closeChangePasswordModal()">&times;</button>
+            </div>
+            <form class="modal-form" onsubmit="saveNewPassword(event)">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" class="form-input" required />
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" class="form-input" required />
+                    <p class="help-text">Password must be at least 8 characters</p>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" class="form-input" required />
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Email Modal -->
+    <div id="editEmailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change Email Address</h2>
+                <button class="close-btn" onclick="closeEditEmailModal()">&times;</button>
+            </div>
+            <form class="modal-form" onsubmit="saveNewEmail(event)">
+                <div class="form-group">
+                    <label for="newEmailInput">New Email Address</label>
+                    <input type="email" id="newEmailInput" class="form-input" required />
+                </div>
+                <div class="form-group">
+                    <label for="emailPassword">Confirm with Password</label>
+                    <input type="password" id="emailPassword" class="form-input" required />
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditEmailModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Change Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/settings.js"></script>
+</body>
+</html>

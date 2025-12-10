@@ -154,8 +154,8 @@ async function previewReceipt() {
     !formData.internId ||
     !formData.paymentDate ||
     !formData.paymentType ||
-    !formData.amountDue ||
-    !formData.amountPaid
+    formData.amountDue === null || formData.amountDue === "" || isNaN(formData.amountDue) ||
+    formData.amountPaid === null || formData.amountPaid === "" || isNaN(formData.amountPaid)
   ) {
     alert("Please fill in all required fields")
     return
