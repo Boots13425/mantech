@@ -28,6 +28,48 @@
     --radius-lg: 24px;
 }
 
+/* Theme overrides for dark mode and auto */
+:root[data-theme="dark"], body.dark-theme {
+    --primary: #0f1724;
+    --primary-light: #0b7285;
+    --primary-dark: #071426;
+
+    --white: #0b1220;
+    --gray-50: #0b1220;
+    --gray-100: #0f1724;
+    --gray-200: #111827;
+    --gray-600: #cbd5e1;
+    --gray-700: #9aa4b2;
+    --gray-900: #f3f4f6;
+
+    --accent: #06b6d4;
+    --accent-light: #22c1d9;
+
+    --success: #10b981;
+    --error: #ef4444;
+    --warning: #f59e0b;
+    --info: #3b82f6;
+}
+
+/* Respect system preference when theme is set to auto */
+@media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"] {
+        --primary: #0f1724;
+        --primary-light: #0b7285;
+        --primary-dark: #071426;
+
+        --white: #0b1220;
+        --gray-50: #0b1220;
+        --gray-100: #0f1724;
+        --gray-200: #111827;
+        --gray-600: #cbd5e1;
+        --gray-700: #9aa4b2;
+        --gray-900: #f3f4f6;
+
+        --accent: #06b6d4;
+        --accent-light: #22c1d9;
+    }
+}
 * {
     margin: 0;
     padding: 0;
