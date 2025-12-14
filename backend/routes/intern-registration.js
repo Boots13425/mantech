@@ -35,10 +35,10 @@ function isValidEmail(email) {
   return emailRegex.test(email)
 }
 
-// Validate phone format
+// Validate phone format - Accept formats: (123) 456-7890, 123-456-7890, 1234567890, +1-123-456-7890
 function isValidPhone(phone) {
-  const phoneRegex = /^\d{9,}$/
-  return phoneRegex.test(phone.replace(/\D/g, ""))
+  const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/
+  return phoneRegex.test(phone.replace(/\s/g, ""))
 }
 
 // Validate date range
@@ -95,7 +95,7 @@ router.post("/register-intern", async (req, res) => {
     // Validate phone format
     if (!isValidPhone(phone)) {
       return res.status(400).json({
-        message: "Invalid phone number format.",
+        message: "Invalid phone number format. Please use formats like: (123) 456-7890, 123-456-7890, or 1234567890",
       })
     }
 
@@ -178,8 +178,9 @@ router.post("/register-intern", async (req, res) => {
       }
     }
 
-    // Generate receipt PDF
-    const receiptPDF = await generateReceiptPDF({
+    // Generate receipt PDF and send email asynchronously (non-blocking)
+    // This ensures registration succeeds even if email fails
+    generateReceiptPDF({
       id: internData.id,
       firstName: internData.first_name,
       lastName: internData.last_name,
@@ -189,12 +190,17 @@ router.post("/register-intern", async (req, res) => {
       startDate,
       endDate,
     })
+      .then((receiptPath) => {
+        return sendWelcomeEmail(email, firstName, lastName, receiptPath)
+      })
+      .catch((emailError) => {
+        console.error("Failed to send welcome email to", email, ":", emailError.message)
+        // Log to file or monitoring service for later retry
+      })
 
-    // Send welcome email with receipt attachment
-    await sendWelcomeEmail(email, firstName, lastName, receiptPDF)
-
+    // Respond immediately with success
     res.status(201).json({
-      message: "Intern registered successfully. Receipt sent to email.",
+      message: "Intern registered successfully. Receipt will be sent to email shortly.",
       internId: internData.id,
     })
   } catch (error) {
@@ -390,7 +396,15 @@ async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
   }
 
   try {
+    // Check if email credentials are configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.warn("Email credentials not configured in .env file. Email will not be sent.")
+      console.log(`Email would have been sent to: ${email}`)
+      return
+    }
+
     await transporter.sendMail(mailOptions)
+    console.log(`Welcome email sent successfully to ${email}`)
 
     // Clean up temp file after sending
     setTimeout(() => {
@@ -401,8 +415,10 @@ async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
       }
     }, 5000)
   } catch (error) {
-    console.error("Email send error:", error)
-    throw new Error("Failed to send email")
+    console.error("Email send error:", error.message)
+    // Log detailed error for debugging
+    console.error("Failed to send email to:", email)
+    // Don't throw - allow registration to succeed even if email fails
   }
 }
 
