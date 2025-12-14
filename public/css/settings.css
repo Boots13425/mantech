@@ -2,7 +2,7 @@
 
 .settings-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 40px 20px;
 }
 
@@ -16,7 +16,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(255, 255, 255, 0.2);
+    background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
     padding: 10px 16px;
@@ -431,18 +431,18 @@
 }
 
 .btn-primary {
-    background: var(--primary);
+    background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
 }
 
 .btn-primary:hover {
-    background: var(--primary-dark);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(30, 58, 138, 0.3);
 }
 
 .btn-secondary {
-    background: var(--gray-200);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: var(--gray-900);
 }
 
@@ -501,7 +501,7 @@
 }
 
 .close-btn {
-    background: none;
+    background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border: none;
     font-size: 24px;
     cursor: pointer;
