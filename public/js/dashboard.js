@@ -1,4 +1,4 @@
-// Check if user is authenticated
+﻿// Check if user is authenticated
 async function checkAuth() {
     try {
         const response = await fetch('/api/auth/check');
@@ -8,7 +8,8 @@ async function checkAuth() {
         } else {
             const data = await response.json();
             // Update user name
-            document.getElementById('userName').textContent = data.user.email;
+            const userNameEl = document.getElementById('userName');
+            if (userNameEl && data.user) userNameEl.textContent = data.user.email || data.user.name || 'Admin User';
         }
     } catch (error) {
         console.error('Auth check failed:', error);
@@ -31,8 +32,8 @@ function logout() {
 // Navigate to menu items (placeholder)
 function navigateTo(path) {
     alert(`Navigation to ${path} coming in future milestones!`);
-    // In future milestones, this will navigate to actual pages
 }
 
 // Check authentication on page load
 checkAuth();
+// No burger/overlay script needed — keep basic page behavior.

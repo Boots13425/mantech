@@ -27,9 +27,9 @@ function initSettingsNavigation() {
 // Load admin profile from server (placeholder)
 async function loadAdminProfile() {
   try {
-    const res = await fetch('/api/admin/profile')
+    const res = await apiRequest('/api/admin/profile')
     if (res.ok) {
-      const profile = await res.json()
+      const profile = res.body || {}
       document.getElementById('adminEmail').value = profile.email || ''
       document.getElementById('adminName').value = profile.name || ''
     } else {
@@ -94,6 +94,8 @@ async function saveNewEmail(e) {
 // Helper to perform fetch and safely parse JSON or text
 async function apiRequest(url, opts) {
   try {
+    opts = opts || {}
+    if (!opts.credentials) opts.credentials = 'same-origin'
     const resp = await fetch(url, opts)
     const contentType = resp.headers.get('content-type') || ''
     let body = null
@@ -145,15 +147,15 @@ async function saveNewPassword(e) {
   if (newPass !== confirm) { alert('Passwords do not match'); return }
 
   try {
-    const res = await fetch('/api/admin/change-password', {
+    const res = await apiRequest('/api/admin/change-password', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ current, newPass })
     })
-    const r = await res.json()
     if (res.ok) {
       closeChangePasswordModal()
       alert('Password changed successfully')
     } else {
-      alert(r.message || 'Failed to change password')
+      const msg = (res.body && (res.body.message || res.body.error)) || 'Failed to change password'
+      alert(msg)
     }
   } catch (err) {
     console.error('Password change error', err);

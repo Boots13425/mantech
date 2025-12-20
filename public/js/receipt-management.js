@@ -40,13 +40,14 @@ internSearch.addEventListener("input", (e) => {
           internSuggestions.innerHTML = '<div class="suggestion-item">No interns found</div>'
         } else {
           internSuggestions.innerHTML = interns
-            .map(
-              (intern) =>
-                `<div class="suggestion-item" onclick="selectIntern(${intern.id}, '${intern.first_name.replace(/'/g, "\\'")}', '${intern.last_name.replace(/'/g, "\\'")}', '${intern.email}', '${intern.phone}')">
-              <div class="suggestion-text">${intern.first_name} ${intern.last_name}</div>
-              <div class="suggestion-email">${intern.email}</div>
-            </div>`,
-            )
+            .map((intern) => {
+              return `
+                <div class="suggestion-item" data-id="${intern.id}" data-first="${(intern.first_name||'').replace(/"/g,'&quot;')}" data-last="${(intern.last_name||'').replace(/"/g,'&quot;')}" data-email="${(intern.email||'').replace(/"/g,'&quot;')}" data-phone="${(intern.phone||'').replace(/"/g,'&quot;')}">
+                  <div class="suggestion-text">${intern.first_name} ${intern.last_name}</div>
+                  <div class="suggestion-email">${intern.email}</div>
+                </div>
+              `
+            })
             .join("")
         }
         internSuggestions.classList.add("active")
@@ -62,15 +63,34 @@ document.addEventListener("click", (e) => {
   }
 })
 
-// Select intern from dropdown
+// Use event delegation for suggestion clicks to avoid inline onclick issues
+internSuggestions.addEventListener('click', (e) => {
+  const item = e.target.closest('.suggestion-item')
+  if (!item) return
+  const id = item.dataset.id
+  const first = item.dataset.first || ''
+  const last = item.dataset.last || ''
+  const email = item.dataset.email || ''
+  const phone = item.dataset.phone || ''
+
+  document.getElementById('internId').value = id
+  document.getElementById('internSearch').value = `${first} ${last}`.trim()
+  document.getElementById('detailName').textContent = `${first} ${last}`.trim()
+  document.getElementById('detailEmail').textContent = email
+  document.getElementById('detailPhone').textContent = phone || 'N/A'
+  document.getElementById('internDetails').style.display = 'block'
+  internSuggestions.classList.remove('active')
+})
+
+// Keep existing API for legacy calls
 function selectIntern(id, firstName, lastName, email, phone) {
-  document.getElementById("internId").value = id
-  document.getElementById("internSearch").value = `${firstName} ${lastName}`
-  document.getElementById("detailName").textContent = `${firstName} ${lastName}`
-  document.getElementById("detailEmail").textContent = email
-  document.getElementById("detailPhone").textContent = phone || "N/A"
-  document.getElementById("internDetails").style.display = "block"
-  internSuggestions.classList.remove("active")
+  document.getElementById('internId').value = id
+  document.getElementById('internSearch').value = `${firstName} ${lastName}`
+  document.getElementById('detailName').textContent = `${firstName} ${lastName}`
+  document.getElementById('detailEmail').textContent = email
+  document.getElementById('detailPhone').textContent = phone || 'N/A'
+  document.getElementById('internDetails').style.display = 'block'
+  internSuggestions.classList.remove('active')
 }
 
 // Payment type conditional fields
@@ -94,7 +114,6 @@ document.getElementById("paymentType").addEventListener("change", (e) => {
 // Form submission
 document.getElementById("receiptForm").addEventListener("submit", async (e) => {
   e.preventDefault()
-
   const formData = {
     internId: document.getElementById("internId").value,
     paymentDate: document.getElementById("paymentDate").value,
@@ -108,31 +127,38 @@ document.getElementById("receiptForm").addEventListener("submit", async (e) => {
     notes: document.getElementById("notes").value || null,
     userId: userId,
   }
+  console.log('[v0] Submitting receipt form with data:', formData)
 
-  console.log("[v0] Submitting receipt form with data:", formData)
+  // Client-side validation before sending
+  const validation = validateReceiptData(formData)
+  if (!validation.ok) {
+    console.warn('[v0] Validation failed:', validation.missing)
+    alert('Please fill in required fields: ' + validation.missing.join(', '))
+    return
+  }
 
   try {
-    const response = await fetch("/api/receipts/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await fetch('/api/receipts/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData),
     })
 
     const result = await response.json()
-    console.log("[v0] Receipt creation response:", result)
+    console.log('[v0] Receipt creation response:', result)
 
     if (response.ok) {
-      alert("Receipt created successfully! Receipt ID: " + result.receiptId)
-      document.getElementById("receiptForm").reset()
-      document.getElementById("internDetails").style.display = "none"
-      document.getElementById("paymentDate").valueAsDate = new Date()
-      document.getElementById("receivedBy").value = adminName
+      alert('Receipt created successfully! Receipt ID: ' + result.receiptId)
+      document.getElementById('receiptForm').reset()
+      document.getElementById('internDetails').style.display = 'none'
+      document.getElementById('paymentDate').valueAsDate = new Date()
+      document.getElementById('receivedBy').value = adminName
     } else {
-      alert("Error: " + result.message)
+      alert('Error: ' + (result.message || 'Failed to create receipt'))
     }
   } catch (error) {
-    console.error("[v0] Error creating receipt:", error)
-    alert("Failed to create receipt: " + error.message)
+    console.error('[v0] Error creating receipt:', error)
+    alert('Failed to create receipt: ' + error.message)
   }
 })
 
@@ -150,14 +176,11 @@ async function previewReceipt() {
     receivedBy: document.getElementById("receivedBy").value,
   }
 
-  if (
-    !formData.internId ||
-    !formData.paymentDate ||
-    !formData.paymentType ||
-    formData.amountDue === null || formData.amountDue === "" || isNaN(formData.amountDue) ||
-    formData.amountPaid === null || formData.amountPaid === "" || isNaN(formData.amountPaid)
-  ) {
-    alert("Please fill in all required fields")
+  // Detailed validation with console logging to help debug missing fields
+  const validation = validateReceiptData(formData)
+  if (!validation.ok) {
+    console.warn('[v0] Preview validation failed:', validation)
+    alert('Please fill in required fields: ' + validation.missing.join(', '))
     return
   }
 
@@ -351,6 +374,18 @@ function formatCurrency(amount) {
     style: "currency",
     currency: CURRENCY,
   }).format(amount)
+}
+
+// Validate receipt data and return missing fields
+function validateReceiptData(formData) {
+  const missing = []
+  if (!formData.internId) missing.push('intern')
+  if (!formData.paymentDate) missing.push('paymentDate')
+  if (!formData.paymentType) missing.push('paymentType')
+  if (formData.amountDue === null || formData.amountDue === '' || isNaN(formData.amountDue)) missing.push('amountDue')
+  if (formData.amountPaid === null || formData.amountPaid === '' || isNaN(formData.amountPaid)) missing.push('amountPaid')
+  if (!formData.paymentMethod) missing.push('paymentMethod')
+  return { ok: missing.length === 0, missing }
 }
 
 async function loadAllReceipts() {
