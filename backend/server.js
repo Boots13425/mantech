@@ -56,11 +56,21 @@ const attendanceRouter = require("./routes/attendance")
 
 const receiptRouter = require("./routes/receipt-management")
 const settingsRouter = require("./routes/settings")
+const adminRouter = require("./routes/admin")
+const adminsRouter = require("./routes/admins")
+const exportRouter = require("./routes/export")
+const backupsRouter = require("./routes/backups")
+
 
 app.use("/api/receipts", receiptRouter)
 app.use("/api/attendance", attendanceRouter)
 // Mount settings router at /settings (not under /api) so the page is reachable
 app.use('/settings', settingsRouter)
+// admin endpoints
+app.use('/api/admin', adminRouter)
+app.use('/api/admins', adminsRouter)
+app.use('/api/export', exportRouter)
+app.use('/api/backups', backupsRouter)
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
@@ -69,6 +79,19 @@ app.post('/api/auth/login', async (req, res) => {
         // Validate input
         if (!email || !password) {
             return res.status(400).json({ message: 'Email and password required' });
+        }
+        
+        // Development fallback: allow test credentials
+        if (process.env.NODE_ENV === 'development' && email === 'admin@ets-ntech.org' && password === 'Admin@123') {
+            req.session.userId = 1;
+            req.session.userEmail = email;
+            return res.json({
+                message: 'Login successful',
+                user: {
+                    id: 1,
+                    email: email
+                }
+            });
         }
         
         // Get connection from pool
@@ -110,7 +133,9 @@ app.post('/api/auth/login', async (req, res) => {
         }
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ message: 'Server error' });
+        const resp = { message: 'Server error' }
+        if (process.env.NODE_ENV !== 'production') resp.error = error.message || String(error)
+        res.status(500).json(resp);
     }
 });
 

@@ -2,7 +2,7 @@
 
 .settings-container {
     min-height: 100vh;
-    background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(to right, #1a1919, #ff8008);
     padding: 40px 20px;
 }
 
@@ -16,7 +16,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background:  black;
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
     padding: 10px 16px;
@@ -322,7 +322,7 @@
 
 .user-permission {
     font-size: 12px;
-    color: var(--accent);
+    color: #667eea;
     font-weight: 500;
 }
 
@@ -431,19 +431,19 @@
 }
 
 .btn-primary {
-    background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: black;
     color: white;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background:black;
     transform: translateY(-2px);
     box-shadow: 0 8px 16px rgba(30, 58, 138, 0.3);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: var(--gray-900);
+    background: black;
+    color:white;
 }
 
 .btn-secondary:hover {
@@ -501,7 +501,7 @@
 }
 
 .close-btn {
-    background:  linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background:  linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
     border: none;
     font-size: 24px;
     cursor: pointer;
