@@ -2,7 +2,7 @@
 
 .register-container {
   min-height: 100vh;
-  background:  linear-gradient(to right, #1a1919, #ff8008);
+  background:  linear-gradient(to right, var(--primary), var(--accent));
   padding: 40px 20px;
 }
 
@@ -81,7 +81,7 @@
   content: "";
   width: 4px;
   height: 24px;
-  background:  linear-gradient(to right, #111, #ff8008, #f0c000, #ffb347);
+  background:  linear-gradient(to right, var(--primary), var(--accent), var(--accent-light));
   border-radius: 2px;
 }
 
@@ -121,8 +121,8 @@
 .form-group textarea:focus {
   outline: none;
   background: white;
-  border-color: #ff8008;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .form-group input.input-error,
@@ -188,7 +188,7 @@
 }
 
 .btn-primary {
-  background: black;
+  background: var(--primary);
   color: white;
   min-width: 180px;
   justify-content: center;
@@ -196,7 +196,7 @@
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
 }
 
 .btn-primary:active {
@@ -389,7 +389,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   animation: slideInRight 0.3s ease-out;
   pointer-events: auto;
-  border-left: 4px solid #667eea;
+  border-left: 4px solid var(--accent);
 }
 
 .toast.success {

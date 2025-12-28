@@ -2,7 +2,7 @@
 
 .receipt-container {
   min-height: auto;
-  background: linear-gradient(to right, #1a1919, #ff8008);
+  background: linear-gradient(to right, var(--primary), var(--accent));
   padding: 40px 20px;
 }
 
@@ -152,8 +152,8 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .form-row {
@@ -261,13 +261,13 @@
 }
 
 .btn-primary {
-  background: black;
+  background: var(--primary);
   color: white;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
 }
 
 .btn-secondary {
@@ -482,8 +482,8 @@
 }
 
 .action-btn-details {
-  background: #e0e7ff;
-  color: #ff8008;
+  background: #dbeafe;
+  color: var(--accent);
   padding: 8px 14px;
   border: none;
   border-radius: 6px;
@@ -494,7 +494,7 @@
 }
 
 .action-btn-details:hover {
-  background:#ff8008; ;
+  background: var(--accent);
   color: white;
 }
 
@@ -616,7 +616,7 @@
   text-align: center;
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid var(--accent);
 }
 
 .receipt-company {

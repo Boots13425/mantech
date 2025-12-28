@@ -2,7 +2,7 @@
 
 .settings-container {
     min-height: 100vh;
-    background: linear-gradient(to right, #1a1919, #ff8008);
+    background: linear-gradient(to right, var(--primary), var(--accent));
     padding: 40px 20px;
 }
 
@@ -16,7 +16,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background:  black;
+    background:  var(--primary);
     border: 1px solid rgba(255, 255, 255, 0.3);
     color: white;
     padding: 10px 16px;
@@ -198,8 +198,8 @@
 
 .form-input:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .form-input[readonly] {
@@ -431,19 +431,19 @@
 }
 
 .btn-primary {
-    background: black;
+    background: var(--primary);
     color: white;
 }
 
 .btn-primary:hover {
-    background:black;
+    background: var(--primary-dark);
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(30, 58, 138, 0.3);
+    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
 }
 
 .btn-secondary {
-    background: black;
-    color:white;
+    background: var(--gray-700);
+    color: white;
 }
 
 .btn-secondary:hover {
@@ -501,7 +501,7 @@
 }
 
 .close-btn {
-    background:  linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+    background:  none;
     border: none;
     font-size: 24px;
     cursor: pointer;

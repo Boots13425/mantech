@@ -15,6 +15,11 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
     document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"))
     btn.classList.add("active")
     document.getElementById(tabName).classList.add("active")
+    
+    // Set up auto-search when search tab is opened
+    if (tabName === "search") {
+      setupAutoSearch()
+    }
   })
 })
 
@@ -282,19 +287,33 @@ function downloadPreviewPDF() {
   closePreview()
 }
 
+// Debounce timer for search
+let searchDebounceTimer = null
+
 // Search receipts
 async function searchReceipts() {
-  const query = document.getElementById("searchQuery").value
+  const query = document.getElementById("searchQuery").value.trim()
   const startDate = document.getElementById("searchStartDate").value
   const endDate = document.getElementById("searchEndDate").value
   const paymentType = document.getElementById("searchPaymentType").value
 
+  // Only search if there's at least one filter applied
+  const hasQuery = query.length >= 2 // Minimum 2 characters for text search
+  const hasDateFilter = startDate || endDate
+  const hasPaymentType = paymentType !== ""
+
+  // If no filters are applied, clear results and return
+  if (!hasQuery && !hasDateFilter && !hasPaymentType) {
+    document.getElementById("searchResults").innerHTML = ""
+    return
+  }
+
   try {
     const params = new URLSearchParams({
-      ...(query && { query }),
+      ...(hasQuery && { query }),
       ...(startDate && { startDate }),
       ...(endDate && { endDate }),
-      ...(paymentType && { paymentType }),
+      ...(hasPaymentType && { paymentType }),
     })
 
     const response = await fetch(`/api/receipts/search?${params}`)
@@ -337,7 +356,7 @@ async function searchReceipts() {
                 <td><span style="padding: 4px 8px; background: ${receipt.status === "Active" ? "#d0f0c0" : "#fcc2c2"}; border-radius: 4px; font-size: 12px;">${receipt.status}</span></td>
                 <td>
                   <div class="result-actions">
-                    <button class="action-btn action-btn-view" onclick="viewReceipt(${receipt.id})">View</button>
+                    <button class="action-btn action-btn-view" onclick="viewReceiptDetails(${receipt.id})">View</button>
                     <button class="action-btn action-btn-print" onclick="printReceipt(${receipt.id})">Print</button>
                   </div>
                 </td>
@@ -357,9 +376,113 @@ async function searchReceipts() {
   }
 }
 
-// View receipt details
+// Debounced search function for text input
+function debouncedSearch() {
+  clearTimeout(searchDebounceTimer)
+  const query = document.getElementById("searchQuery").value.trim()
+  
+  // Only search if query has at least 2 characters, or clear results if empty
+  if (query.length === 0) {
+    // Check if other filters are active
+    const startDate = document.getElementById("searchStartDate").value
+    const endDate = document.getElementById("searchEndDate").value
+    const paymentType = document.getElementById("searchPaymentType").value
+    
+    // If no other filters, clear results immediately
+    if (!startDate && !endDate && !paymentType) {
+      document.getElementById("searchResults").innerHTML = ""
+      return
+    }
+  }
+  
+  // Only trigger search if query has at least 2 characters or other filters are active
+  if (query.length >= 2 || query.length === 0) {
+    searchDebounceTimer = setTimeout(() => {
+      searchReceipts()
+    }, 500) // Wait 500ms after user stops typing
+  }
+}
+
+// Flag to track if auto-search is already set up
+let autoSearchSetup = false
+
+// Set up auto-search event listeners
+function setupAutoSearch() {
+  // Only set up once
+  if (autoSearchSetup) return
+  
+  const searchQuery = document.getElementById("searchQuery")
+  const searchStartDate = document.getElementById("searchStartDate")
+  const searchEndDate = document.getElementById("searchEndDate")
+  const searchPaymentType = document.getElementById("searchPaymentType")
+
+  // Add event listeners for auto-search
+  if (searchQuery) {
+    searchQuery.addEventListener("input", debouncedSearch)
+  }
+
+  if (searchStartDate) {
+    searchStartDate.addEventListener("change", () => {
+      // Clear results if date is cleared and no other filters
+      if (!searchStartDate.value) {
+        const query = document.getElementById("searchQuery").value.trim()
+        const endDate = document.getElementById("searchEndDate").value
+        const paymentType = document.getElementById("searchPaymentType").value
+        if (!query && !endDate && !paymentType) {
+          document.getElementById("searchResults").innerHTML = ""
+          return
+        }
+      }
+      searchReceipts()
+    })
+  }
+
+  if (searchEndDate) {
+    searchEndDate.addEventListener("change", () => {
+      // Clear results if date is cleared and no other filters
+      if (!searchEndDate.value) {
+        const query = document.getElementById("searchQuery").value.trim()
+        const startDate = document.getElementById("searchStartDate").value
+        const paymentType = document.getElementById("searchPaymentType").value
+        if (!query && !startDate && !paymentType) {
+          document.getElementById("searchResults").innerHTML = ""
+          return
+        }
+      }
+      searchReceipts()
+    })
+  }
+
+  if (searchPaymentType) {
+    searchPaymentType.addEventListener("change", () => {
+      // Clear results if payment type is cleared and no other filters
+      if (!searchPaymentType.value) {
+        const query = document.getElementById("searchQuery").value.trim()
+        const startDate = document.getElementById("searchStartDate").value
+        const endDate = document.getElementById("searchEndDate").value
+        if (!query && !startDate && !endDate) {
+          document.getElementById("searchResults").innerHTML = ""
+          return
+        }
+      }
+      searchReceipts()
+    })
+  }
+  
+  autoSearchSetup = true
+}
+
+// Set up auto-search when page loads
+document.addEventListener("DOMContentLoaded", () => {
+  // Set up auto-search after a short delay to ensure DOM is ready
+  setTimeout(() => {
+    setupAutoSearch()
+  }, 100)
+})
+
+// View receipt details (legacy function - now redirects to viewReceiptDetails)
 function viewReceipt(receiptId) {
-  alert("Receipt details: " + receiptId)
+  viewReceiptDetails(receiptId)
 }
 
 // Print receipt
@@ -663,7 +786,13 @@ document.getElementById("partialPaymentForm").addEventListener("submit", async (
     const result = await response.json()
 
     if (response.ok) {
-      alert("Partial payment recorded successfully!\nNew Status: " + result.newStatus)
+      // Check if payment is in full or still partial
+      const isPaidInFull = result.newStatus === "Paid in Full"
+      const message = isPaidInFull
+        ? `Payment completed successfully! The receipt has been paid in full.\nStatus: ${result.newStatus}`
+        : `Partial payment recorded successfully!\nNew Status: ${result.newStatus}\nRemaining Balance: ${formatCurrency(result.remainingBalance)}`
+      
+      alert(message)
       closePartialPaymentModal()
       closeDetailsModal()
       loadAllReceipts()
