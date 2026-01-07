@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Management - MANTECH</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/group-management.css">
+</head>
+<body>
+    <div class="groups-container">
+        <!-- Added header with back button similar to intern registration -->
+        <div class="groups-header">
+            <button class="back-btn" onclick="goBackToDashboard()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to Dashboard
+            </button>
+            <h1>Intern Project Groups</h1>
+            <div class="header-subtitle">Create and manage collaborative project groups</div>
+        </div>
+
+        <!-- Main content with tabbed navigation similar to receipt management -->
+        <div class="groups-main">
+            <div class="group-tabs">
+                <button class="group-tab-btn active" data-tab="view-groups-view">View Groups</button>
+                <button class="group-tab-btn" data-tab="generate-groups-view">Generate Groups</button>
+            </div>
+
+            <!-- View Groups -->
+            <div id="view-groups-view" class="view-section group-tab-content active">
+                <div class="section-header">
+                    <h2>Existing Project Groups</h2>
+                </div>
+
+                <div class="load-section">
+                    <button class="btn btn-primary" onclick="loadAllGroups()">Load All Groups</button>
+                </div>
+
+                <div id="groups-container" class="groups-grid"></div>
+                <div id="no-groups-message" class="empty-state hidden">
+                    <div class="empty-icon">📭</div>
+                    <p>No groups created yet. <a href="#" onclick="switchToGenerate()">Generate your first group</a></p>
+                </div>
+            </div>
+
+            <!-- Generate Groups -->
+            <div id="generate-groups-view" class="generate-section group-tab-content">
+                <div class="section-header">
+                    <h2>Generate New Groups</h2>
+                </div>
+
+                <div class="generate-card">
+                    <div class="generate-info">
+                        <h3>Ready to create groups?</h3>
+                        <p>The system will automatically distribute interns across balanced project groups based on:</p>
+                        <ul class="info-list">
+                            <li>School diversity</li>
+                            <li>Department representation</li>
+                            <li>Equal group sizes (max 8 interns per group)</li>
+                        </ul>
+                        <p class="info-note">You'll be able to review and manually adjust groups before saving.</p>
+                    </div>
+                    <button class="btn btn-success btn-large" onclick="startGroupGeneration()">
+                        Generate Groups Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Generation Proposal (simplified) -->
+    <div id="proposal-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Group Generation Preview</h2>
+                <button class="close-btn" onclick="closeModal('proposal-modal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="proposal-stats">
+                    <div class="stat-box">
+                        <div class="stat-number" id="total-interns">0</div>
+                        <div class="stat-label">Total Interns</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number" id="num-groups">0</div>
+                        <div class="stat-label">Groups</div>
+                    </div>
+                </div>
+
+                <div id="proposal-groups" class="proposal-groups"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('proposal-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="manualAdjustProposal()">Review & Adjust</button>
+                <button class="btn btn-success" onclick="confirmAndSaveGroups()">Confirm & Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Manual Adjustments (simplified) -->
+    <div id="adjust-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Adjust Groups</h2>
+                <button class="close-btn" onclick="closeModal('adjust-modal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="adjust-info">
+                    <p>Click on an intern to move them to a different group, or use the controls below.</p>
+                </div>
+
+                <div class="adjust-controls">
+                    <div class="adjust-selected">
+                        <span class="label">Selected intern:</span>
+                        <span id="selected-member-label" class="value">None</span>
+                    </div>
+                    <div class="adjust-move">
+                        <select id="target-group-select" class="form-control">
+                            <option value="">Select destination group</option>
+                        </select>
+                        <button class="btn btn-secondary" onclick="moveSelectedMember()">Move</button>
+                    </div>
+                </div>
+
+                <div id="adjust-preview" class="adjust-preview-grid"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('adjust-modal')">Back to Preview</button>
+                <button class="btn btn-success" onclick="confirmAdjustedGroups()">Save Adjusted Groups</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Group Details (for viewing existing groups) -->
+    <div id="group-details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="group-details-title">Group Details</h2>
+                <button class="close-btn" onclick="closeModal('group-details-modal')">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="group-details-tabs">
+                    <button class="detail-tab active" onclick="switchDetailTab('members')">Members</button>
+                    <button class="detail-tab" onclick="switchDetailTab('manage')">Manage</button>
+                    <button class="detail-tab" onclick="switchDetailTab('history')">History</button>
+                </div>
+
+                <div id="members-tab" class="detail-tab-content active">
+                    <div id="group-members-list" class="members-list"></div>
+                </div>
+
+                <div id="manage-tab" class="detail-tab-content hidden">
+                    <div class="manage-section">
+                        <h3>Add Member</h3>
+                        <div class="manage-form">
+                            <select id="intern-to-add" class="form-control">
+                                <option value="">Select intern to add...</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="addMemberToGroup()">Add</button>
+                        </div>
+                        <div id="unassigned-list" class="unassigned-list"></div>
+                    </div>
+                </div>
+
+                <div id="history-tab" class="detail-tab-content hidden">
+                    <div id="group-audit-log" class="audit-log"></div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('group-details-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/group-management.js"></script>
+</body>
+</html>

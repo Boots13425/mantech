@@ -60,6 +60,8 @@ const adminRouter = require("./routes/admin")
 const adminsRouter = require("./routes/admins")
 const exportRouter = require("./routes/export")
 const backupsRouter = require("./routes/backups")
+const groupRouter = require("./routes/group-management")
+
 
 
 app.use("/api/receipts", receiptRouter)
@@ -71,6 +73,8 @@ app.use('/api/admin', adminRouter)
 app.use('/api/admins', adminsRouter)
 app.use('/api/export', exportRouter)
 app.use('/api/backups', backupsRouter)
+app.use("/api/groups", groupRouter)
+
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
