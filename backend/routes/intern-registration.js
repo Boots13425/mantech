@@ -5,20 +5,19 @@ const nodemailer = require("nodemailer")
 const PDFDocument = require("pdfkit")
 const fs = require("fs")
 const path = require("path")
-const mysql = require('mysql2/promise')
-require('dotenv').config()
+const mysql = require("mysql2/promise")
+require("dotenv").config()
 
 // Create a MySQL pool for this router (keeps router standalone)
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'mantech_db',
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "mantech_db",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 })
-
 
 // Configure email transporter
 const transporter = nodemailer.createTransport({
@@ -37,13 +36,18 @@ function isValidEmail(email) {
 
 // Validate phone format - Accept formats: (123) 456-7890, 123-456-7890, 1234567890, +1-123-456-7890
 function isValidPhone(phone) {
-  const phoneRegex = /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/
+  const phoneRegex = /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/
   return phoneRegex.test(phone.replace(/\s/g, ""))
 }
 
 // Validate date range
 function isValidDateRange(startDate, endDate) {
   return new Date(startDate) < new Date(endDate)
+}
+
+function generateRegistrationId() {
+  const randomNumber = Math.floor(Math.random() * 900000) + 100000
+  return `INT${randomNumber}`
 }
 
 // Register Intern Endpoint
@@ -112,23 +116,25 @@ router.post("/register-intern", async (req, res) => {
 
     try {
       // Check if intern already registered with this email
-      const [existingRows] = await connection.query('SELECT id FROM interns WHERE email = ?', [email])
+      const [existingRows] = await connection.query("SELECT id FROM interns WHERE email = ?", [email])
 
       if (existingRows.length > 0) {
         connection.release()
         return res.status(400).json({
-          message: 'An intern with this email is already registered.',
+          message: "An intern with this email is already registered.",
         })
       }
 
-      // Insert intern into database
+      const registrationId = generateRegistrationId()
+
       const insertQuery = `INSERT INTO interns 
-        (first_name, last_name, email, phone, school, degree, year_of_study, gpa, 
+        (registration_id, first_name, last_name, email, phone, school, degree, year_of_study, gpa, 
          department, start_date, end_date, mentor, skills, notes, registration_date, status)
         VALUES 
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'active')`
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'active')`
 
       const [insertResult] = await connection.query(insertQuery, [
+        registrationId,
         firstName,
         lastName,
         email,
@@ -149,7 +155,7 @@ router.post("/register-intern", async (req, res) => {
 
       // Retrieve the newly inserted intern row
       const [rows] = await connection.query(
-        'SELECT id, first_name, last_name, email, registration_date FROM interns WHERE id = ?',
+        "SELECT id, registration_id, first_name, last_name, email, registration_date FROM interns WHERE id = ?",
         [insertedId],
       )
 
@@ -158,13 +164,13 @@ router.post("/register-intern", async (req, res) => {
       try {
         connection.release()
       } catch (releaseError) {
-        console.error('Connection release error:', releaseError)
+        console.error("Connection release error:", releaseError)
       }
 
       // Handle duplicate email entry gracefully (race condition)
-      if (dbError.code === 'ER_DUP_ENTRY' && dbError.sqlMessage && dbError.sqlMessage.includes('email')) {
+      if (dbError.code === "ER_DUP_ENTRY" && dbError.sqlMessage && dbError.sqlMessage.includes("email")) {
         return res.status(400).json({
-          message: 'An intern with this email is already registered.',
+          message: "An intern with this email is already registered.",
         })
       }
 
@@ -174,7 +180,7 @@ router.post("/register-intern", async (req, res) => {
       try {
         connection.release()
       } catch (e) {
-        console.error('Connection release error:', e)
+        console.error("Connection release error:", e)
       }
     }
 
@@ -182,6 +188,7 @@ router.post("/register-intern", async (req, res) => {
     // This ensures registration succeeds even if email fails
     generateReceiptPDF({
       id: internData.id,
+      registrationId: internData.registration_id,
       firstName: internData.first_name,
       lastName: internData.last_name,
       email: internData.email,
@@ -191,7 +198,7 @@ router.post("/register-intern", async (req, res) => {
       endDate,
     })
       .then((receiptPath) => {
-        return sendWelcomeEmail(email, firstName, lastName, receiptPath)
+        return sendWelcomeEmail(email, firstName, lastName, internData.registration_id, receiptPath)
       })
       .catch((emailError) => {
         console.error("Failed to send welcome email to", email, ":", emailError.message)
@@ -202,6 +209,7 @@ router.post("/register-intern", async (req, res) => {
     res.status(201).json({
       message: "Intern registered successfully. Receipt will be sent to email shortly.",
       internId: internData.id,
+      registrationId: internData.registration_id,
     })
   } catch (error) {
     console.error("Registration error:", error)
@@ -241,10 +249,9 @@ async function generateReceiptPDF(internData) {
       doc.moveTo(40, 90).lineTo(555, 90).stroke()
       doc.fontSize(20).font("Helvetica-Bold").text("INTERNSHIP RECEIPT", 40, 110)
 
-      // Receipt details box
       const detailsY = 160
-      doc.fontSize(9).font("Helvetica-Bold").text("Receipt #:", 40, detailsY)
-      doc.font("Helvetica").text(`INT-${internData.id.toString().padStart(6, "0")}`, 120, detailsY)
+      doc.fontSize(9).font("Helvetica-Bold").text("Registration ID:", 40, detailsY)
+      doc.font("Helvetica").text(internData.registrationId, 120, detailsY)
 
       doc.font("Helvetica-Bold").text("Date:", 40, detailsY + 20)
       doc.font("Helvetica").text(new Date(internData.registrationDate).toLocaleDateString(), 120, detailsY + 20)
@@ -335,7 +342,7 @@ async function generateReceiptPDF(internData) {
 }
 
 // Send Welcome Email with Receipt
-async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
+async function sendWelcomeEmail(email, firstName, lastName, registrationId, receiptPath) {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
@@ -358,7 +365,7 @@ async function sendWelcomeEmail(email, firstName, lastName, receiptPath) {
                     
                     <div style="background: #f0fff4; border-left: 4px solid #48bb78; padding: 15px; margin: 20px 0; border-radius: 4px;">
                         <p style="color: #22543d; font-size: 14px; margin: 0;">
-                            <strong>Attached to this email is your internship receipt.</strong> Please keep it for your records. Your registration ID is: <strong>INT-${email.split("@")[0]}</strong>
+                            <strong>Attached to this email is your internship receipt.</strong> Please keep it for your records. Your unique Registration ID is: <strong style="font-size: 16px; color: #276749;">${registrationId}</strong>
                         </p>
                     </div>
                     
