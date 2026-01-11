@@ -1,8 +1,8 @@
 /* Attendance Page Styles */
 
 .attendance-container {
-  min-height: 100vh;
-  background: linear-gradient(to right, var(--primary), var(--accent));
+  min-height: auto;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 40px 20px;
 }
 
@@ -69,23 +69,21 @@
 .date-picker-group label {
   font-size: 14px;
   font-weight: 600;
-  color: var(--gray-900);
+  color: #2d3748;
 }
 
 .date-picker-group input {
   padding: 10px 12px;
-  border: 1px solid var(--gray-200);
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
   font-size: 14px;
   font-family: inherit;
-  background: white;
-  transition: all 0.3s ease;
 }
 
 .date-picker-group input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 /* Export Button */
@@ -93,7 +91,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -106,10 +104,36 @@
 
 .btn-export:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgba(37, 99, 235, 0.22);
+  box-shadow: 0 8px 12px rgba(102, 126, 234, 0.4);
 }
 
 .btn-export:active {
+  transform: translateY(0);
+}
+
+/* Add styling for the Load Attendance button */
+.btn-load {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-load:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-load:active {
   transform: translateY(0);
 }
 
@@ -130,25 +154,25 @@
 }
 
 .attendance-table thead {
-  background: var(--gray-50);
-  border-bottom: 2px solid var(--gray-200);
+  background: #f7fafc;
+  border-bottom: 2px solid #e2e8f0;
 }
 
 .attendance-table th {
   padding: 16px;
   text-align: left;
   font-weight: 600;
-  color: var(--gray-900);
+  color: #2d3748;
 }
 
 .attendance-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid var(--gray-200);
-  color: var(--gray-700);
+  border-bottom: 1px solid #e2e8f0;
+  color: #4a5568;
 }
 
 .attendance-table tbody tr:hover {
-  background: var(--gray-50);
+  background: #f7fafc;
 }
 
 .attendance-table tbody tr:last-child td {
@@ -293,13 +317,13 @@
 
 .modal-content p {
   padding: 20px;
-  color: var(--gray-700);
+  color: #4a5568;
   line-height: 1.6;
 }
 
 .btn-primary {
   margin: 0 20px 20px;
-  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -312,7 +336,7 @@
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 12px rgba(37, 99, 235, 0.4);
+  box-shadow: 0 8px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* Responsive */

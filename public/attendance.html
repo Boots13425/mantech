@@ -15,7 +15,7 @@
                 <span>←</span> Back to Dashboard
             </button>
             <h1>Attendance Management</h1>
-            <p class="header-subtitle">Mark interns present or absent and export to Excel</p>
+            <p class="header-subtitle">View sign-ins, mark attendance, and export to Excel</p>
         </div>
 
         <!-- Controls -->
@@ -24,6 +24,9 @@
                 <label for="attendance-date">Select Date:</label>
                 <input type="date" id="attendance-date" />
             </div>
+            <button class="btn-load" onclick="loadAttendanceByDate()">
+                <span>🔄</span> Load Attendance
+            </button>
             <button class="btn-export" onclick="exportToExcel()">
                 <span>📥</span> Export to Excel
             </button>
@@ -47,7 +50,10 @@
                         <th>Intern Name</th>
                         <th>Email</th>
                         <th>Department</th>
+                        <th>Sign-in Time</th>
                         <th>Status</th>
+                        <th>Override</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="attendance-tbody">
@@ -58,7 +64,37 @@
 
         <!-- Empty State -->
         <div id="empty-state" class="empty-state" style="display: none;">
-            <p>No interns found in the system</p>
+            <p>No attendance records found for the selected date</p>
+        </div>
+
+        <!-- Override Modal -->
+        <div id="override-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Override Attendance Status</h2>
+                    <button class="modal-close" onclick="closeModal('override-modal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p id="override-intern-name" style="margin-bottom: 15px; font-weight: bold;"></p>
+                    <div class="form-group">
+                        <label for="override-status">Status:</label>
+                        <select id="override-status">
+                            <option value="Present">Present</option>
+                            <option value="Absent">Absent</option>
+                            <option value="Late">Late</option>
+                            <option value="Excused">Excused Absence</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="override-reason">Reason for Override:</label>
+                        <textarea id="override-reason" placeholder="Enter reason for this override..." rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeModal('override-modal')">Cancel</button>
+                    <button class="btn-primary" onclick="saveOverride()">Save Override</button>
+                </div>
+            </div>
         </div>
 
         <!-- Success Modal -->
@@ -72,7 +108,7 @@
             </div>
         </div>
     </div>
-
+    
     <script src="js/theme.js"></script>
     <script src="js/attendance.js"></script>
 </body>

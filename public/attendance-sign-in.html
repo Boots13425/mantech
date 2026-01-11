@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mark Attendance - MANTech</title>
+    <link rel="stylesheet" href="css/attendance-sign-in.css">
+</head>
+<body>
+    <div class="signin-container">
+        <!-- Header -->
+        <div class="signin-header">
+            <h1>Mark Attendance</h1>
+            <p class="subtitle">Enter your registration ID to mark attendance</p>
+        </div>
+
+        <!-- Status Message -->
+        <div id="status-message" class="status-message" style="display: none;"></div>
+
+        <!-- Main Form -->
+        <div id="signin-form" class="signin-form">
+            <div class="form-group">
+                <label for="registration-id">Registration ID</label>
+                <input 
+                    type="text" 
+                    id="registration-id" 
+                    placeholder="e.g., INT123456"
+                    maxlength="9"
+                    autocomplete="off"
+                >
+                <small>Format: INT followed by 6 digits</small>
+            </div>
+
+            <button class="btn-submit" onclick="submitAttendance()">Mark Attendance</button>
+        </div>
+
+        <!-- Success State -->
+        <div id="success-state" class="success-state" style="display: none;">
+            <div class="success-icon">✓</div>
+            <h2 id="success-title">Attendance Marked</h2>
+            <p id="success-message"></p>
+            <button class="btn-new" onclick="resetForm()">Mark Another</button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="loading-state" style="display: none;">
+            <div class="spinner"></div>
+            <p>Processing attendance...</p>
+        </div>
+    </div>
+
+    <script src="js/attendance-sign-in.js"></script>
+</body>
+</html>
