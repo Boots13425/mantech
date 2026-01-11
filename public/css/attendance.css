@@ -210,6 +210,25 @@
   background: #fc8181;
 }
 
+/* New status styles */
+.status-late {
+  background: #fff7c0;
+  color: #6b4f00;
+}
+
+.status-late:hover {
+  background: #fff3a3;
+}
+
+.status-excused {
+  background: #e6f0ff;
+  color: #1f4b7a;
+}
+
+.status-excused:hover {
+  background: #cfe0ff;
+}
+
 /* Loading Spinner */
 .loading-spinner {
   max-width: 1000px;

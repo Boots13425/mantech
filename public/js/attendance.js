@@ -6,8 +6,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Load attendance data
   loadAttendanceData()
-  // Create override modal on page load
-  createOverrideModal()
 })
 
 async function loadAttendanceData() {
@@ -49,8 +47,35 @@ function populateAttendanceTable(records) {
 
   records.forEach((record) => {
     const row = document.createElement("tr")
-    const status = record.status.charAt(0).toUpperCase() + record.status.slice(1)
-    const statusClass = record.status === "present" ? "status-present" : "status-absent"
+    const statusRaw = (record.status || "absent").toLowerCase()
+    let statusDisplay = ""
+    let statusClass = ""
+    let statusSymbol = ""
+
+    switch (statusRaw) {
+      case "present":
+        statusDisplay = "Present"
+        statusClass = "status-present"
+        statusSymbol = "✓"
+        break
+      case "late":
+        statusDisplay = "Late"
+        statusClass = "status-late"
+        statusSymbol = "⌛"
+        break
+      case "excused":
+        statusDisplay = "Excused Absence"
+        statusClass = "status-excused"
+        statusSymbol = "⚑"
+        break
+      case "absent":
+      default:
+        statusDisplay = "Absent"
+        statusClass = "status-absent"
+        statusSymbol = "✗"
+        break
+    }
+
     const signInTime = record.sign_in_time ? new Date(record.sign_in_time).toLocaleTimeString() : "—"
     const overrideStatus = record.is_override ? "Yes" : "No"
 
@@ -62,7 +87,7 @@ function populateAttendanceTable(records) {
       <td>${signInTime}</td>
       <td>
         <span class="status-badge ${statusClass}">
-          ${status === "Present" ? "✓" : "✗"} ${status}
+          ${statusSymbol} ${statusDisplay}
         </span>
       </td>
       <td>${overrideStatus}</td>
@@ -85,55 +110,43 @@ function openOverrideModal(internId, date, currentStatus) {
   // Store intern_id and date as data attributes instead of hidden inputs
   document.getElementById("override-modal").dataset.internId = internId
   document.getElementById("override-modal").dataset.date = date
+  // Update date and current status displays if those spans exist
+  const dateSpan = document.getElementById("override-date")
+  if (dateSpan) dateSpan.textContent = date
+  const currentStatusSpan = document.getElementById("override-current-status")
+  if (currentStatusSpan) currentStatusSpan.textContent = currentStatus
   document.getElementById("override-status").value = currentStatus.toLowerCase()
   document.getElementById("override-reason").value = ""
   document.getElementById("override-modal").style.display = "flex"
 }
 
-function createOverrideModal() {
-  const modalHTML = `
-    <div id="override-modal" class="modal" style="display: none;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Override Attendance</h2>
-          <button class="close-btn" onclick="closeModal('override-modal')">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p><strong>Date:</strong> <span id="override-date"></span></p>
-          <p><strong>Current Status:</strong> <span id="override-current-status"></span></p>
-          
-          <label for="override-status">New Status:</label>
-          <select id="override-status" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;">
-            <option value="present">Present</option>
-            <option value="absent">Absent</option>
-          </select>
-          
-          <label for="override-reason" style="margin-top: 16px; display: block;">Reason for Override:</label>
-          <textarea id="override-reason" placeholder="e.g., Excused absence, Sick leave, etc." style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; min-height: 80px;"></textarea>
-          
-          <span id="override-intern-name" style="display: block; margin-top: 16px;"></span>
-        </div>
-        <div class="modal-footer" style="display: flex; gap: 10px; padding: 20px; border-top: 1px solid #e2e8f0;">
-          <button class="btn-primary" onclick="saveOverride()">Save Override</button>
-          <button class="btn-secondary" onclick="closeModal('override-modal')" style="background: #e2e8f0; color: #2d3748;">Cancel</button>
-        </div>
-      </div>
-    </div>
-  `
-
-  document.body.insertAdjacentHTML("beforeend", modalHTML)
-}
+// Using the static modal already present in HTML; dynamic creation removed to avoid duplicates.
+// function createOverrideModal() { ... } removed intentionally.
 
 async function saveOverride() {
   try {
     const modal = document.getElementById("override-modal")
     const internId = Number.parseInt(modal.dataset.internId)
     const date = modal.dataset.date
-    const status = document.getElementById("override-status").value
+    let statusRaw = document.getElementById("override-status").value.toLowerCase()
     const reason = document.getElementById("override-reason").value
-    const adminId = localStorage.getItem("user_id") || 1
+    const adminId = parseInt(localStorage.getItem("user_id"), 10) || 1
 
-    console.log("[v0] Saving override - internId:", internId, "date:", date, "status:", status)
+    // Validate internId
+    if (!internId || isNaN(internId)) {
+      showErrorMessage("Invalid intern selected for override.")
+      return
+    }
+
+    // Validate status against allowed values (store exact status)
+    const allowedStatuses = ["present", "absent", "late", "excused"]
+    if (!allowedStatuses.includes(statusRaw)) {
+      showErrorMessage("Invalid status selected.")
+      return
+    }
+    const status = statusRaw
+
+    console.log("[v0] Saving override - internId:", internId, "date:", date, "status:", status, "adminId:", adminId)
 
     if (!reason.trim()) {
       showErrorMessage("Please provide a reason for the override.")
@@ -153,7 +166,8 @@ async function saveOverride() {
     })
 
     if (!response.ok) {
-      throw new Error("Failed to override attendance")
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || "Failed to override attendance")
     }
 
     showSuccessModal("Attendance overridden successfully")
@@ -161,7 +175,7 @@ async function saveOverride() {
     loadAttendanceByDate()
   } catch (error) {
     console.error("[v0] Override error:", error)
-    showErrorMessage("Failed to override attendance. Please try again.")
+    showErrorMessage(error.message || "Failed to override attendance. Please try again.")
   }
 }
 

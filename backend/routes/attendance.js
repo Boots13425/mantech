@@ -327,10 +327,10 @@ router.post("/override", async (req, res) => {
       })
     }
 
-    if (!["present", "absent"].includes(status)) {
+    if (!["present", "absent", "late", "excused"].includes(status)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid status.",
+        message: "Invalid status. Allowed values: present, absent, late, excused",
       })
     }
 

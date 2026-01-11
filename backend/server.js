@@ -45,15 +45,10 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
-
 // ==================== API ROUTES ====================
 
 const internRegistrationRouter = require("./routes/intern-registration")
-
-app.use("/api", internRegistrationRouter)
-
 const attendanceRouter = require("./routes/attendance")
-
 const receiptRouter = require("./routes/receipt-management")
 const settingsRouter = require("./routes/settings")
 const adminRouter = require("./routes/admin")
@@ -63,7 +58,7 @@ const backupsRouter = require("./routes/backups")
 const groupRouter = require("./routes/group-management")
 
 
-
+app.use("/api", internRegistrationRouter)
 app.use("/api/receipts", receiptRouter)
 app.use("/api/attendance", attendanceRouter)
 // Mount settings router at /settings (not under /api) so the page is reachable
