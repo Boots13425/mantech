@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Jan 08, 2026 at 08:27 AM
+-- Generation Time: Jan 11, 2026 at 01:26 PM
 -- Server version: 10.4.27-MariaDB
 -- PHP Version: 8.0.25
 
@@ -31,7 +31,43 @@ CREATE TABLE `attendance` (
   `id` int(11) NOT NULL,
   `intern_id` int(11) NOT NULL,
   `attendance_date` date NOT NULL,
-  `status` enum('present','absent','late') DEFAULT 'present',
+  `status` enum('present','absent','late','excused') DEFAULT 'absent',
+  `registration_id` varchar(20) DEFAULT NULL,
+  `sign_in_time` datetime DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL,
+  `device_fingerprint` varchar(255) DEFAULT NULL,
+  `validation_method` varchar(50) DEFAULT NULL,
+  `is_override` tinyint(1) DEFAULT 0,
+  `override_by` int(11) DEFAULT NULL,
+  `override_reason` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `attendance`
+--
+
+INSERT INTO `attendance` (`id`, `intern_id`, `attendance_date`, `status`, `registration_id`, `sign_in_time`, `ip_address`, `device_fingerprint`, `validation_method`, `is_override`, `override_by`, `override_reason`, `created_at`, `updated_at`) VALUES
+(13, 18, '2026-01-11', 'present', NULL, '2026-01-11 09:15:00', '192.168.2.101', 'device_fp_001', 'token', 0, NULL, NULL, '2026-01-11 12:21:20', '2026-01-11 12:21:20'),
+(14, 19, '2026-01-11', 'absent', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, '2026-01-11 12:21:20', '2026-01-11 12:21:20'),
+(15, 17, '2026-01-10', 'present', NULL, '2026-01-10 09:30:00', '192.168.2.101', 'device_fp_001', 'token', 0, NULL, NULL, '2026-01-11 12:21:20', '2026-01-11 12:21:20'),
+(16, 19, '2026-01-10', 'present', NULL, '2026-01-10 10:00:00', '192.168.2.102', 'device_fp_002', 'token', 0, NULL, NULL, '2026-01-11 12:21:20', '2026-01-11 12:21:20');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `attendance_audit_logs`
+--
+
+CREATE TABLE `attendance_audit_logs` (
+  `id` int(11) NOT NULL,
+  `admin_id` int(11) DEFAULT NULL,
+  `intern_id` int(11) NOT NULL,
+  `action` varchar(50) NOT NULL,
+  `old_value` varchar(100) DEFAULT NULL,
+  `new_value` varchar(100) DEFAULT NULL,
+  `reason` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -348,8 +384,19 @@ INSERT INTO `users` (`id`, `email`, `password`, `full_name`, `created_at`, `upda
 --
 ALTER TABLE `attendance`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_attendance` (`intern_id`,`attendance_date`),
-  ADD KEY `idx_date` (`attendance_date`);
+  ADD UNIQUE KEY `unique_daily_attendance` (`intern_id`,`attendance_date`),
+  ADD KEY `idx_attendance_date` (`attendance_date`),
+  ADD KEY `idx_registration_id` (`registration_id`),
+  ADD KEY `idx_sign_in_time` (`sign_in_time`);
+
+--
+-- Indexes for table `attendance_audit_logs`
+--
+ALTER TABLE `attendance_audit_logs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `intern_id` (`intern_id`),
+  ADD KEY `idx_action` (`action`),
+  ADD KEY `idx_created_at` (`created_at`);
 
 --
 -- Indexes for table `budget`
@@ -454,6 +501,12 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `attendance`
 --
 ALTER TABLE `attendance`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+
+--
+-- AUTO_INCREMENT for table `attendance_audit_logs`
+--
+ALTER TABLE `attendance_audit_logs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -525,6 +578,12 @@ ALTER TABLE `users`
 --
 ALTER TABLE `attendance`
   ADD CONSTRAINT `attendance_ibfk_1` FOREIGN KEY (`intern_id`) REFERENCES `interns` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `attendance_audit_logs`
+--
+ALTER TABLE `attendance_audit_logs`
+  ADD CONSTRAINT `attendance_audit_logs_ibfk_1` FOREIGN KEY (`intern_id`) REFERENCES `interns` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `groups`
