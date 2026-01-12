@@ -27,7 +27,7 @@ function getDeviceFingerprint(req) {
 }
 
 function isLANAccess(ipAddress) {
-  const lanPattern = /^192\.168\.2\./
+  const lanPattern = /^192\.168\.8\./
   return lanPattern.test(ipAddress)
 }
 
@@ -160,7 +160,7 @@ router.get("/export", async (req, res) => {
     await workbook.xlsx.write(res)
     res.end()
   } catch (error) {
-    console.error("[v0] Excel export error:", error)
+    console.error("Excel export error:", error)
     res.status(500).json({
       success: false,
       message: "Failed to export attendance",
@@ -230,7 +230,7 @@ router.get("/history", async (req, res) => {
       date: date,
     })
   } catch (error) {
-    console.error("[v0] Attendance history error:", error)
+    console.error(" Attendance history error:", error)
     res.status(500).json({
       success: false,
       message: "Failed to fetch attendance history.",
@@ -291,6 +291,23 @@ router.post("/sign-in", async (req, res) => {
       })
     }
 
+    // Prevent reuse of the same device fingerprint for multiple interns on the same day
+    const [deviceUsed] = await connection.query(
+      `SELECT intern_id, registration_id FROM attendance 
+       WHERE attendance_date = ? AND device_fingerprint = ?
+       LIMIT 1`,
+      [today, deviceFingerprint],
+    )
+
+    if (deviceUsed && deviceUsed.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "This device has already been used to sign attendance for today.",
+        used_by_registration_id: deviceUsed[0].registration_id || null,
+        used_by_intern_id: deviceUsed[0].intern_id,
+      })
+    }
+
     const currentTime = new Date()
     await connection.query(
       `INSERT INTO attendance 
@@ -305,7 +322,7 @@ router.post("/sign-in", async (req, res) => {
       intern_name: `${interns[0].first_name} ${interns[0].last_name}`,
     })
   } catch (error) {
-    console.error("[v0] Attendance sign-in error:", error)
+    console.error(" Attendance sign-in error:", error)
     res.status(500).json({
       success: false,
       message: "Failed to mark attendance.",
