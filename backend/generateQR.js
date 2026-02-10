@@ -1,6 +1,6 @@
 const QRcode = require('qrcode')
 
-const url = 'http://192.168.2.101:3000/attendance-sign-in.html'
+const url = 'http://172.16.1.101:3000/attendance-sign-in.html'
 
 QRcode.toFile('attendance-qr.png', url, {
     color: {
