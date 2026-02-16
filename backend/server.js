@@ -15,13 +15,11 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Session configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    secret: process.env.SESSION_SECRET || 'Admin@123',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+        secure: false
     }
 }));
 
@@ -40,7 +38,7 @@ const pool = mysql.createPool({
 // Middleware to check authentication
 const requireAuth = (req, res, next) => {
     if (!req.session.userId) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        return res.redirect('/login');
     }
     next();
 };
@@ -124,7 +122,8 @@ app.post('/api/auth/login', async (req, res) => {
                 message: 'Login successful',
                 user: {
                     id: user.id,
-                    email: user.email
+                    email: user.email,
+                    role: user.role
                 }
             });
         } finally {
@@ -139,18 +138,25 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Check authentication endpoint
-app.get('/api/auth/check', (req, res) => {
+app.get('/api/auth/check', async (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ message: 'Not authenticated' });
     }
-    
-    res.json({
-        authenticated: true,
-        user: {
-            id: req.session.userId,
-            email: req.session.userEmail
-        }
-    });
+
+    try {
+        const connection = await pool.getConnection();
+        try {
+            const [rows] = await connection.query('SELECT id, email, full_name as name FROM users WHERE id = ?', [req.session.userId]);
+            if (rows.length === 0) return res.status(401).json({ message: 'Not authenticated' });
+            const user = rows[0];
+            // Keep session in sync
+            try { req.session.userEmail = user.email } catch (e) {}
+            res.json({ authenticated: true, user });
+        } finally { connection.release(); }
+    } catch (err) {
+        console.error('Auth check error', err);
+        res.status(500).json({ message: 'Server error' });
+    }
 });
 
 // Logout endpoint

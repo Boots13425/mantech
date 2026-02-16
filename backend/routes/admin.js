@@ -62,6 +62,8 @@ router.post('/change-email', async (req, res) => {
       const match = await bcrypt.compare(password, rows[0].password)
       if (!match) return res.status(401).json({ message: 'Invalid password' })
       await connection.query('UPDATE users SET email = ? WHERE id = ?', [email, req.session.userId])
+      // Update session email so UI/auth check reflects change immediately
+      try { req.session.userEmail = email } catch (e) { /* ignore if session not writable */ }
       res.json({ message: 'Email updated' })
     } finally { connection.release() }
   } catch (err) { console.error(err); res.status(500).json({ message: 'Server error' }) }
@@ -76,7 +78,8 @@ router.post('/change-password', async (req, res) => {
   let connection
   try {
     connection = await pool.getConnection()
-    const [rows] = await connection.query('SELECT password FROM users WHERE id = ?', [req.session.userId])
+    const userId = req.session.userId
+    const [rows] = await connection.query('SELECT password, email FROM users WHERE id = ?', [userId])
     if (rows.length === 0) return res.status(404).json({ message: 'Admin not found' })
     const isMatch = await bcrypt.compare(current, rows[0].password)
     if (!isMatch) return res.status(401).json({ message: 'Current password is incorrect' })
@@ -85,10 +88,14 @@ router.post('/change-password', async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(500).json({ message: 'Password update failed' })
     }
-
+    // Preserve user id/email across session regeneration
+    const email = rows[0].email
     req.session.regenerate(err => {
       if (err) return res.status(500).json({ message: 'Session refresh failed' })
-      req.session.userId = req.session.userId
+      try {
+        req.session.userId = userId
+        req.session.userEmail = email
+      } catch (e) { /* ignore if session not writable */ }
       res.json({ message: 'Password changed' })
     })
   } catch (err) {

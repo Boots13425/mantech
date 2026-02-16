@@ -34,10 +34,7 @@
                         <span class="nav-icon">👥</span>
                         <span>User Management</span>
                     </button>
-                    <button class="settings-nav-btn" data-section="data-security">
-                        <span class="nav-icon">🔒</span>
-                        <span>Data & Security</span>
-                    </button>
+                
                 </div>
             </aside>
 
@@ -79,12 +76,6 @@
                             <label>Change Password</label>
                             <p class="help-text">Update your password to keep your account secure</p>
                             <button class="btn btn-primary" onclick="openChangePasswordModal()">Change Password</button>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Two-Factor Authentication</label>
-                            <p class="help-text">Add an extra layer of security to your account</p>
-                            <button class="btn btn-primary" onclick="enableTwoFactor()">Enable 2FA</button>
                         </div>
 
                         <div class="form-group">
@@ -245,123 +236,6 @@
                     </div>
                 </section>
 
-                <!-- Data & Security -->
-                <section id="data-security" class="settings-section">
-                    <div class="section-header">
-                        <h2>Data & Security</h2>
-                        <p>Backup, restore, and manage data security</p>
-                    </div>
-
-                    <div class="settings-card">
-                        <h3 class="card-title">Data Backup</h3>
-                        <p class="help-text">Regular backups ensure your data is safe and recoverable</p>
-
-                        <div class="backup-info">
-                            <div class="info-item">
-                                <span class="label">Last Backup:</span>
-                                <span class="value" id="lastBackupTime">Never</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">Backup Status:</span>
-                                <span class="value status-active" id="backupStatus">Scheduled</span>
-                            </div>
-                        </div>
-
-                        <div class="backup-actions">
-                            <button class="btn btn-primary" onclick="performBackup()">
-                                <span>💾</span> Create Backup Now
-                            </button>
-                            <button class="btn btn-secondary" onclick="downloadBackup()">
-                                <span>⬇️</span> Download Backup
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="settings-card">
-                        <h3 class="card-title">Data Restore</h3>
-                        <p class="help-text">Restore your system from a previous backup</p>
-
-                        <div class="form-group">
-                            <label>Select Backup to Restore</label>
-                            <select id="backupSelect" class="form-input">
-                                <option value="">-- Select a backup --</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="restoreFile">Or Upload Backup File</label>
-                            <input type="file" id="restoreFile" class="form-input" accept=".backup,.zip,.sql" />
-                        </div>
-
-                        <button class="btn btn-warning" onclick="restoreFromBackup()">Restore from Backup</button>
-                        <p class="help-text warning">Warning: Restoring will overwrite all current data. This action cannot be undone.</p>
-                    </div>
-
-                    <div class="settings-card">
-                        <h3 class="card-title">Data Audit Log</h3>
-                        <p class="help-text">Review all data changes and system activities for compliance</p>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="auditStartDate">From Date</label>
-                                <input type="date" id="auditStartDate" class="form-input" />
-                            </div>
-                            <div class="form-group">
-                                <label for="auditEndDate">To Date</label>
-                                <input type="date" id="auditEndDate" class="form-input" />
-                            </div>
-                        </div>
-
-                        <button class="btn btn-primary" onclick="exportAuditLog()">Export Audit Log</button>
-                        <button class="btn btn-secondary" onclick="viewAuditLog()">View Audit Log</button>
-                    </div>
-
-                    <div class="settings-card">
-                        <h3 class="card-title">Data Export</h3>
-                        <p class="help-text">Export all your data for archival or compliance purposes</p>
-
-                        <div class="export-options">
-                            <button class="btn btn-secondary" onclick="exportData('interns')">
-                                <span>📊</span> Export Interns Data
-                            </button>
-                            <button class="btn btn-secondary" onclick="exportData('attendance')">
-                                <span>📋</span> Export Attendance
-                            </button>
-                            <button class="btn btn-secondary" onclick="exportData('receipts')">
-                                <span>💳</span> Export Receipts
-                            </button>
-                            <button class="btn btn-secondary" onclick="exportData('all')">
-                                <span>📦</span> Export All Data
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="settings-card">
-                        <h3 class="card-title">System Security</h3>
-                        <p class="help-text">Monitor and manage security settings</p>
-
-                        <div class="security-info">
-                            <div class="info-item">
-                                <span class="label">SSL Certificate:</span>
-                                <span class="value status-active">Valid ✓</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">Database Encryption:</span>
-                                <span class="value status-active">Enabled ✓</span>
-                            </div>
-                            <div class="info-item">
-                                <span class="label">Last Security Audit:</span>
-                                <span class="value" id="lastSecurityAudit">30 days ago</span>
-                            </div>
-                        </div>
-
-                        <button class="btn btn-secondary" onclick="runSecurityCheck()">Run Security Check</button>
-                    </div>
-                </section>
-            </main>
-        </div>
-    </div>
-
     <!-- Change Password Modal -->
     <div id="changePasswordModal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -372,16 +246,31 @@
             <form class="modal-form" onsubmit="saveNewPassword(event)">
                 <div class="form-group">
                     <label for="currentPassword">Current Password</label>
-                    <input type="password" id="currentPassword" class="form-input" required />
+                    <div class="password-input-group">
+                        <input type="password" id="currentPassword" class="form-input" required />
+                        <button type="button" class="show-password-btn" onclick="togglePasswordVisibility('currentPassword')">
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" class="form-input" required />
+                    <div class="password-input-group">
+                        <input type="password" id="newPassword" class="form-input" required />
+                        <button type="button" class="show-password-btn" onclick="togglePasswordVisibility('newPassword')">
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
                     <p class="help-text">Password must be at least 8 characters</p>
                 </div>
                 <div class="form-group">
                     <label for="confirmPassword">Confirm Password</label>
-                    <input type="password" id="confirmPassword" class="form-input" required />
+                    <div class="password-input-group">
+                        <input type="password" id="confirmPassword" class="form-input" required />
+                        <button type="button" class="show-password-btn" onclick="togglePasswordVisibility('confirmPassword')">
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>

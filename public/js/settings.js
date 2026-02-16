@@ -163,9 +163,7 @@ async function saveNewPassword(e) {
   }
 }
 
-// 2FA placeholder
-function enableTwoFactor() { alert('Two-Factor setup coming soon') }
-function viewActiveSessions() { alert('Active sessions list coming soon') }
+
 
 // Theme & platform settings
 function setTheme(theme) {
@@ -380,6 +378,20 @@ async function exportData(type) {
 }
 
 async function runSecurityCheck() { alert('Running security checks... (placeholder)'); setTimeout(()=>alert('Security check complete'), 1200) }
+
+// Toggle password visibility
+function togglePasswordVisibility(inputId) {
+  const input = document.getElementById(inputId)
+  const button = event.target.closest('.show-password-btn')
+  
+  if (input.type === 'password') {
+    input.type = 'text'
+    button.classList.add('visible')
+  } else {
+    input.type = 'password'
+    button.classList.remove('visible')
+  }
+}
 
 // Close modals when clicking outside
 window.addEventListener('click', (e) => {
