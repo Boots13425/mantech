@@ -22,10 +22,16 @@ const pool = mysql.createPool({
 
 // Configure email transporter
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || "gmail",
+  host: process.env.SMTP_HOST || 'smtp.zoho.com',
+  port: parseInt(process.env.SMTP_PORT, 10) || 465,
+  secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
   auth: {
-user: process.env.EMAIL_USER || "fongongserge21@gmail.com",
-    pass: process.env.EMAIL_PASSWORD || "sobyreuthxfaifcv",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  family: 4,
+  tls: {
+    rejectUnauthorized: true,
   },
 })
 
@@ -209,7 +215,7 @@ async function generateReceiptPDFFile(receiptId) {
 async function sendReceiptEmail(receiptId, isPartialPayment = false) {
   try {
     // Check if email credentials are configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.warn("Email credentials not configured in .env file. Email will not be sent.")
       return
     }
@@ -363,7 +369,7 @@ async function sendReceiptEmail(receiptId, isPartialPayment = false) {
       `
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: process.env.SMTP_USER,
       to: receipt.email,
       subject: subject,
       html: emailBody,

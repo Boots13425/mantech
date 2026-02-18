@@ -248,7 +248,7 @@ async function addAdminUser(e) {
 
   try {
     const res = await fetch('/api/admins', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, name, permission, status }) })
-    const r = await res.json()
+    const r = await res.json()  
     if (res.ok) {
       alert('Admin user added')
       loadAdminUsers()

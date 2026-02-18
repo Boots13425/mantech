@@ -27,7 +27,7 @@ function getDeviceFingerprint(req) {
 }
 
 function isLANAccess(ipAddress) {
-  const lanPattern = /^172\.16\.2\./
+  const lanPattern = /^172\.16\.1\./
   return lanPattern.test(ipAddress)
 }
 

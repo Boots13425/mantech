@@ -21,10 +21,17 @@ const pool = mysql.createPool({
 
 // Configure email transporter
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || "gmail",
+  host: process.env.SMTP_HOST || 'smtp.zoho.com',
+  port: parseInt(process.env.SMTP_PORT, 10) || 465,
+  secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
   auth: {
-    user: process.env.EMAIL_USER || "fongongserge21@gmail.com",
-    pass: process.env.EMAIL_PASSWORD || "sobyreuthxfaifcv",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  family: 4,
+  tls: {
+    // Keep default behavior; set to false only for testing with self-signed certs
+    rejectUnauthorized: true,
   },
 })
 
@@ -344,7 +351,7 @@ async function generateReceiptPDF(internData) {
 // Send Welcome Email with Receipt
 async function sendWelcomeEmail(email, firstName, lastName, registrationId, receiptPath) {
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_USER,
     to: email,
     subject: `Welcome to ETS NTECH - Internship Confirmation, ${firstName}!`,
     html: `
@@ -404,7 +411,7 @@ async function sendWelcomeEmail(email, firstName, lastName, registrationId, rece
 
   try {
     // Check if email credentials are configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
       console.warn("Email credentials not configured in .env file. Email will not be sent.")
       console.log(`Email would have been sent to: ${email}`)
       return

@@ -672,13 +672,3 @@
 .show-password-btn:active {
     background: var(--gray-100);
 }
-
-.show-password-btn.visible {
-    color: var(--accent);
-    background: var(--accent);
-    border-color: var(--accent);
-}
-
-.show-password-btn.visible .eye-icon {
-    color: white;
-}
