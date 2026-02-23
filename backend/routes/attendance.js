@@ -13,10 +13,20 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
 })
-
+  const allowedSubnets = 
+process.env.ALLOWED_SUBNETS
+? process.env.ALLOWED_SUBNETS.split(",")
+ : [];
+ 
 function getClientIP(req) {
-  return req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress || req.connection.remoteAddress
+  let ip =
+   req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress || req.connection.remoteAddress || ""
+      if (ip.startsWith("::ffff:")) {
+        ip = ip.substring(7)
+      }
+      return ip
 }
+ 
 
 function getDeviceFingerprint(req) {
   const userAgent = req.headers["user-agent"] || ""
@@ -27,8 +37,7 @@ function getDeviceFingerprint(req) {
 }
 
 function isLANAccess(ipAddress) {
-  const lanPattern = /^172\.16\.1\./
-  return lanPattern.test(ipAddress)
+  return allowedSubnets.some(sub => ipAddress.startsWith(sub))
 }
 
 // Get all interns for attendance list
@@ -251,7 +260,7 @@ router.post("/sign-in", async (req, res) => {
     if (!isLANAccess(clientIP)) {
       return res.status(403).json({
         success: false,
-        message: "Access denied. You must be connected to the ETS NTECH network.",
+        message: "Access denied. You must be connected to the NTECH INTERNS network.",
       })
     }
 
