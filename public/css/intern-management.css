@@ -211,15 +211,15 @@
   padding: 8px 12px;
   font-size: 12px;
 }
-
 .custom-modal {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.55);
   display: none;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
+  overflow-y: auto;
   z-index: 9999;
 }
 
@@ -234,6 +234,10 @@
   border-radius: 22px;
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
   overflow: hidden;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
 }
 
 .modal-large {
@@ -247,6 +251,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -264,6 +269,8 @@
 
 .modal-form {
   padding: 24px;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .form-grid {
@@ -300,5 +307,26 @@ textarea.form-input {
 
   .toolbar-actions .btn {
     flex: 1;
+  }
+
+    .custom-modal {
+    padding: 12px;
+  }
+
+  .modal-card {
+    max-height: calc(100vh - 24px);
+    border-radius: 16px;
+  }
+
+  .modal-form {
+    padding: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions .btn {
+    width: 100%;
   }
 }
