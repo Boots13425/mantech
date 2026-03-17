@@ -416,7 +416,7 @@ async function generateReceiptId() {
       [yearMonth],
     )
 
-    const sequence = String(rows[0].count + 1).padStart(3, "0")
+    const sequence = String(rows[0].count + 2).padStart(3, "0")
     return `ETS/${year}/${month}/${sequence}`
   } finally {
     connection.release()

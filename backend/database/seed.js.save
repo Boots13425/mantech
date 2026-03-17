@@ -31,15 +31,7 @@ async function seedDatabase() {
         const interns = [
             ['tester', 'test', 'tester@gmail.com', '+237612345678', '2005-03-15']
         ];
-        
-        for (const intern of interns) {
-            await connection.query(
-                'INSERT INTO interns (first_name, last_name, email, phone, date_of_birth, registration_date, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                [...intern, new Date().toISOString().split('T')[0], 'active']
-            );
-        }
-        console.log('✅ Sample interns created\n');
-        
+  
         console.log('🎉 Database seeding completed successfully!');
         
     } catch (error) {
