@@ -1,18 +1,9 @@
 const express = require("express")
-const mysql = require("mysql2/promise")
 const ExcelJS = require("exceljs")
 const router = express.Router()
 require("dotenv").config()
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "mantech_db",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-})
+const pool = require("../db")
   const allowedSubnets = 
 process.env.ALLOWED_SUBNETS
 ? process.env.ALLOWED_SUBNETS.split(",")

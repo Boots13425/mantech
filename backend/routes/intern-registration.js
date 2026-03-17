@@ -5,25 +5,21 @@ const nodemailer = require("nodemailer")
 const PDFDocument = require("pdfkit")
 const fs = require("fs")
 const path = require("path")
-const mysql = require("mysql2/promise")
 require("dotenv").config()
 
-// Create a MySQL pool for this router (keeps router standalone)
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "mantech_db",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-})
+const pool = require("../db")
 
 // Configure email transporter
+const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10)
+const smtpSecure =
+  process.env.SMTP_SECURE !== undefined
+    ? String(process.env.SMTP_SECURE).toLowerCase() === "true"
+    : smtpPort === 465
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.zoho.com',
-  port: parseInt(process.env.SMTP_PORT, 10) || 465,
-  secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
+  host: process.env.SMTP_HOST || "smtp.zoho.com",
+  port: smtpPort,
+  secure: smtpSecure,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,

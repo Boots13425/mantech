@@ -108,7 +108,7 @@ function calculateDiversityMetrics(groups) {
 router.post("/generate", async (req, res) => {
   try {
     // Fetch all active interns (robust to NULL/empty/mixed-case status)
-    const [interns] = await db.promise().query(
+    const [interns] = await db.query(
       `SELECT id, first_name, last_name, email, school, department 
        FROM interns i
        WHERE ${ACTIVE_INTERN_CONDITION_RAW}
@@ -214,7 +214,7 @@ router.post("/confirm", async (req, res) => {
 
   try {
     const placeholders = uniqueMemberIds.map(() => "?").join(",")
-    const [validRows] = await db.promise().query(
+    const [validRows] = await db.query(
       `SELECT id FROM interns WHERE id IN (${placeholders}) AND ${ACTIVE_INTERN_CONDITION_RAW}`,
       uniqueMemberIds,
     )
@@ -303,7 +303,7 @@ router.post("/confirm", async (req, res) => {
 // API endpoint: Get all groups with members
 router.get("/all", async (req, res) => {
   try {
-    const [groups] = await db.promise().query(
+    const [groups] = await db.query(
       `SELECT g.id, g.group_name, g.group_number, g.status, g.created_at, 
               COUNT(gm.id) as member_count
        FROM groups g
@@ -314,7 +314,7 @@ router.get("/all", async (req, res) => {
 
     const enrichedGroups = await Promise.all(
       groups.map(async (group) => {
-        const [members] = await db.promise().query(
+        const [members] = await db.query(
           `SELECT i.id, i.first_name, i.last_name, i.school, i.email, i.department
            FROM group_members gm
            JOIN interns i ON gm.intern_id = i.id
@@ -349,7 +349,7 @@ router.get("/:groupId", async (req, res) => {
   try {
     const { groupId } = req.params
 
-    const [groups] = await db.promise().query(`SELECT * FROM groups WHERE id = ?`, [groupId])
+    const [groups] = await db.query(`SELECT * FROM groups WHERE id = ?`, [groupId])
 
     if (groups.length === 0) {
       return res.status(404).json({
@@ -358,7 +358,7 @@ router.get("/:groupId", async (req, res) => {
       })
     }
 
-    const [members] = await db.promise().query(
+    const [members] = await db.query(
       `SELECT i.id, i.first_name, i.last_name, i.school, i.email, i.department, gm.assigned_at
        FROM group_members gm
        JOIN interns i ON gm.intern_id = i.id
@@ -367,7 +367,7 @@ router.get("/:groupId", async (req, res) => {
       [groupId],
     )
 
-    const [auditLogs] = await db.promise().query(
+    const [auditLogs] = await db.query(
       `SELECT ral.id, ral.action, ral.action_timestamp, u.full_name, ral.details
        FROM group_audit_logs ral
        JOIN users u ON ral.action_by = u.id
@@ -495,7 +495,7 @@ router.post("/remove-member", async (req, res) => {
 
   try {
     // Mark as removed
-    await db.promise().query(
+    await db.query(
       `UPDATE group_members 
        SET status = 'removed'
        WHERE group_id = ? AND intern_id = ?`,
@@ -503,7 +503,7 @@ router.post("/remove-member", async (req, res) => {
     )
 
     // Log removal
-    await db.promise().query(
+    await db.query(
       `INSERT INTO group_audit_logs (group_id, action, action_by, details)
        VALUES (?, 'REMOVE_MEMBER', ?, ?)`,
       [groupId, removedBy, `Removed intern ${internId} from group`],
@@ -539,7 +539,7 @@ router.post("/add-member", async (req, res) => {
 
   try {
     // Verify intern exists and is active
-    const [internRows] = await db.promise().query(
+    const [internRows] = await db.query(
       `SELECT id FROM interns WHERE id = ? AND ${ACTIVE_INTERN_CONDITION_RAW}`,
       [internId],
     )
@@ -551,7 +551,7 @@ router.post("/add-member", async (req, res) => {
     }
 
     // Check if already in group
-    const [existing] = await db.promise().query(
+    const [existing] = await db.query(
       `SELECT id FROM group_members 
        WHERE group_id = ? AND intern_id = ? AND status = 'active'`,
       [groupId, internId],
@@ -565,7 +565,7 @@ router.post("/add-member", async (req, res) => {
     }
 
     // Check group size
-    const [groupMembers] = await db.promise().query(
+    const [groupMembers] = await db.query(
       `SELECT COUNT(*) as count FROM group_members 
        WHERE group_id = ? AND status = 'active'`,
       [groupId],
@@ -579,14 +579,14 @@ router.post("/add-member", async (req, res) => {
     }
 
     // Add member
-    await db.promise().query(
+    await db.query(
       `INSERT INTO group_members (group_id, intern_id, assigned_by, status)
        VALUES (?, ?, ?, 'active')`,
       [groupId, internId, addedBy],
     )
 
     // Log addition
-    await db.promise().query(
+    await db.query(
       `INSERT INTO group_audit_logs (group_id, action, action_by, details)
        VALUES (?, 'ADD_MEMBER', ?, ?)`,
       [groupId, addedBy, `Added intern ${internId} to group`],

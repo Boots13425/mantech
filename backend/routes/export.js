@@ -1,19 +1,10 @@
 const express = require('express')
-const mysql = require('mysql2/promise')
 // Lightweight CSV generator (no external dependency)
 require('dotenv').config()
 
 const router = express.Router()
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'mantech_db',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-})
+const pool = require("../db")
 
 // Export simple CSV for requested type (interns, receipts, attendance)
 router.get('/:type', async (req, res) => {

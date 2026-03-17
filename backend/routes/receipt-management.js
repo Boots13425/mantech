@@ -1,6 +1,5 @@
 const express = require("express")
 const router = express.Router()
-const mysql = require("mysql2/promise")
 const PDFDocument = require("pdfkit")
 const QRCode = require("qrcode")
 const fs = require("fs")
@@ -8,23 +7,19 @@ const path = require("path")
 const nodemailer = require("nodemailer")
 require("dotenv").config()
 
-// Initialize MySQL connection pool
-const pool = mysql.createPool({
-
-    host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "mantech_db",
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-})
+const pool = require("../db")
 
 // Configure email transporter
+const smtpPort = parseInt(process.env.SMTP_PORT || "465", 10)
+const smtpSecure =
+  process.env.SMTP_SECURE !== undefined
+    ? String(process.env.SMTP_SECURE).toLowerCase() === "true"
+    : smtpPort === 465
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.zoho.com',
-  port: parseInt(process.env.SMTP_PORT, 10) || 465,
-  secure: String(process.env.SMTP_SECURE).toLowerCase() === 'true',
+  host: process.env.SMTP_HOST || "smtp.zoho.com",
+  port: smtpPort,
+  secure: smtpSecure,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
@@ -369,7 +364,7 @@ async function sendReceiptEmail(receiptId, isPartialPayment = false) {
       `
 
     const mailOptions = {
-      from: process.env.SMTP_USER,
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
       to: receipt.email,
       subject: subject,
       html: emailBody,
@@ -400,30 +395,49 @@ async function sendReceiptEmail(receiptId, isPartialPayment = false) {
   }
 }
 
-// Generate unique receipt ID: ETS/YYYY/MM/SEQUENCE
-async function generateReceiptId() {
-  const connection = await pool.getConnection()
-  try {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, "0")
-    const yearMonth = `${year}${month}`
+// Generate unique receipt ID safely: ETS/YYYY/MM/SEQUENCE
+async function generateReceiptId(connection, paymentDate) {
+  const baseDate = paymentDate ? new Date(paymentDate) : new Date()
 
-    // Get last receipt number for this month
+  if (Number.isNaN(baseDate.getTime())) {
+    throw new Error("Invalid paymentDate supplied for receipt creation")
+  }
+
+  const year = baseDate.getFullYear()
+  const month = String(baseDate.getMonth() + 1).padStart(2, "0")
+  const prefix = `ETS/${year}/${month}/`
+  const lockName = `receipt_id_${year}_${month}`
+
+  const [lockRows] = await connection.query("SELECT GET_LOCK(?, 10) AS lock_acquired", [lockName])
+  if (!lockRows[0] || lockRows[0].lock_acquired !== 1) {
+    throw new Error(`Could not acquire receipt id lock for ${year}-${month}`)
+  }
+
+  try {
     const [rows] = await connection.query(
-      `SELECT COUNT(*) as count FROM receipts 
-       WHERE DATE_FORMAT(payment_date, '%Y%m') = ?`,
-      [yearMonth],
+      `SELECT COALESCE(MAX(CAST(SUBSTRING_INDEX(receipt_id, '/', -1) AS UNSIGNED)), 0) AS last_sequence
+       FROM receipts
+       WHERE receipt_id LIKE ?`,
+      [`${prefix}%`],
     )
 
-    const sequence = String(rows[0].count + 2).padStart(3, "0")
-    return `ETS/${year}/${month}/${sequence}`
-  } finally {
-    connection.release()
+    const nextSequence = String((rows[0]?.last_sequence || 0) + 1).padStart(3, "0")
+    return {
+      receiptId: `${prefix}${nextSequence}`,
+      lockName,
+    }
+  } catch (error) {
+    try {
+      await connection.query("DO RELEASE_LOCK(?)", [lockName])
+    } catch (releaseError) {
+      console.error("Failed to release receipt id lock after generation error:", releaseError.message)
+    }
+    throw error
   }
 }
 
 // Get all receipts
+
 router.get("/all", async (req, res) => {
   try {
     const connection = await pool.getConnection()
@@ -579,8 +593,8 @@ router.post("/create", async (req, res) => {
     try {
       await connection.beginTransaction()
 
-      // Generate receipt ID
-      const receiptId = await generateReceiptId()
+      // Generate receipt ID safely on the same DB connection used for the insert
+      const { receiptId, lockName } = await generateReceiptId(connection, paymentDate)
 
       // Insert receipt
       const [result] = await connection.query(
@@ -624,6 +638,12 @@ router.post("/create", async (req, res) => {
 
       await connection.commit()
 
+      try {
+        await connection.query("DO RELEASE_LOCK(?)", [lockName])
+      } catch (releaseError) {
+        console.error("Failed to release receipt id lock after commit:", releaseError.message)
+      }
+
       // Send receipt email asynchronously (non-blocking)
       // This ensures receipt creation succeeds even if email fails
       sendReceiptEmail(receiptId_id, false).catch((emailError) => {
@@ -637,7 +657,23 @@ router.post("/create", async (req, res) => {
         receipt_id: receiptId_id,
       })
     } catch (error) {
-      await connection.rollback()
+      try {
+        await connection.rollback()
+      } catch (rollbackError) {
+        console.error("Receipt transaction rollback error:", rollbackError.message)
+      }
+
+      try {
+        const paymentDateForLock = paymentDate ? new Date(paymentDate) : new Date()
+        if (!Number.isNaN(paymentDateForLock.getTime())) {
+          const year = paymentDateForLock.getFullYear()
+          const month = String(paymentDateForLock.getMonth() + 1).padStart(2, "0")
+          await connection.query("DO RELEASE_LOCK(?)", [`receipt_id_${year}_${month}`])
+        }
+      } catch (releaseError) {
+        console.error("Failed to release receipt id lock after rollback:", releaseError.message)
+      }
+
       throw error
     } finally {
       connection.release()
@@ -961,7 +997,23 @@ router.post("/void/:receiptId", async (req, res) => {
 
       res.json({ message: "Receipt voided successfully" })
     } catch (error) {
-      await connection.rollback()
+      try {
+        await connection.rollback()
+      } catch (rollbackError) {
+        console.error("Receipt transaction rollback error:", rollbackError.message)
+      }
+
+      try {
+        const paymentDateForLock = paymentDate ? new Date(paymentDate) : new Date()
+        if (!Number.isNaN(paymentDateForLock.getTime())) {
+          const year = paymentDateForLock.getFullYear()
+          const month = String(paymentDateForLock.getMonth() + 1).padStart(2, "0")
+          await connection.query("DO RELEASE_LOCK(?)", [`receipt_id_${year}_${month}`])
+        }
+      } catch (releaseError) {
+        console.error("Failed to release receipt id lock after rollback:", releaseError.message)
+      }
+
       throw error
     } finally {
       connection.release()
@@ -1028,7 +1080,23 @@ router.put("/update/:receiptId", async (req, res) => {
       await connection.commit()
       res.json({ message: "Receipt updated successfully" })
     } catch (error) {
-      await connection.rollback()
+      try {
+        await connection.rollback()
+      } catch (rollbackError) {
+        console.error("Receipt transaction rollback error:", rollbackError.message)
+      }
+
+      try {
+        const paymentDateForLock = paymentDate ? new Date(paymentDate) : new Date()
+        if (!Number.isNaN(paymentDateForLock.getTime())) {
+          const year = paymentDateForLock.getFullYear()
+          const month = String(paymentDateForLock.getMonth() + 1).padStart(2, "0")
+          await connection.query("DO RELEASE_LOCK(?)", [`receipt_id_${year}_${month}`])
+        }
+      } catch (releaseError) {
+        console.error("Failed to release receipt id lock after rollback:", releaseError.message)
+      }
+
       throw error
     } finally {
       connection.release()
@@ -1149,7 +1217,23 @@ router.post("/add-payment/:receiptId", async (req, res) => {
         totalPaid,
       })
     } catch (error) {
-      await connection.rollback()
+      try {
+        await connection.rollback()
+      } catch (rollbackError) {
+        console.error("Receipt transaction rollback error:", rollbackError.message)
+      }
+
+      try {
+        const paymentDateForLock = paymentDate ? new Date(paymentDate) : new Date()
+        if (!Number.isNaN(paymentDateForLock.getTime())) {
+          const year = paymentDateForLock.getFullYear()
+          const month = String(paymentDateForLock.getMonth() + 1).padStart(2, "0")
+          await connection.query("DO RELEASE_LOCK(?)", [`receipt_id_${year}_${month}`])
+        }
+      } catch (releaseError) {
+        console.error("Failed to release receipt id lock after rollback:", releaseError.message)
+      }
+
       throw error
     } finally {
       connection.release()
