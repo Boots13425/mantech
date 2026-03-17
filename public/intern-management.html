@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intern Records Management - MANTech</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/intern-management.css" />
+</head>
+<body>
+  <div class="intern-management-container">
+    <div class="page-header">
+      <button class="back-btn" onclick="window.location.href='dashboard.html'">
+        <span>← Back to Dashboard</span>
+      </button>
+      <h1>Intern Records Management</h1>
+      <p class="header-subtitle">View, edit, search, and deactivate intern records safely</p>
+    </div>
+
+    <div class="toolbar-card">
+      <div class="toolbar-grid">
+        <div class="form-group">
+          <label for="searchInput">Search Intern</label>
+          <input
+            type="text"
+            id="searchInput"
+            class="form-input"
+            placeholder="Search by name, email, registration ID, school, phone..."
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="statusFilter">Filter by Status</label>
+          <select id="statusFilter" class="form-input">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div class="toolbar-actions">
+          <button class="btn btn-primary" id="searchBtn">Search</button>
+          <button class="btn btn-secondary" id="refreshBtn">Refresh</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header-row">
+        <h2>Intern List</h2>
+        <span id="resultCount" class="result-count">0 records</span>
+      </div>
+
+      <div id="tableState" class="table-state">Loading intern records...</div>
+
+      <div class="table-wrapper" id="tableWrapper" style="display: none;">
+        <table class="intern-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Registration ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Department</th>
+              <th>School</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="internTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="custom-modal">
+    <div class="modal-card modal-large">
+      <div class="modal-header">
+        <h2>Edit Intern Record</h2>
+        <button class="modal-close-btn" onclick="closeEditModal()">×</button>
+      </div>
+
+      <form id="editInternForm" class="modal-form">
+        <input type="hidden" id="editInternId" />
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="editFirstName">First Name *</label>
+            <input type="text" id="editFirstName" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editLastName">Last Name *</label>
+            <input type="text" id="editLastName" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editEmail">Email *</label>
+            <input type="email" id="editEmail" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editPhone">Phone *</label>
+            <input type="text" id="editPhone" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editSchool">School *</label>
+            <input type="text" id="editSchool" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editDegree">Degree *</label>
+            <input type="text" id="editDegree" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editYearOfStudy">Year of Study *</label>
+            <select id="editYearOfStudy" class="form-input" required>
+              <option value="">Select year</option>
+              <option value="Year 1">Year 1</option>
+              <option value="Year 2">Year 2</option>
+              <option value="Year 3">Year 3</option>
+              <option value="Year 4">Year 4</option>
+              <option value="Year 5">Year 5</option>
+              <option value="Graduate">Graduate</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editGpa">GPA</label>
+            <input type="number" id="editGpa" class="form-input" step="0.01" min="0" max="4.00" />
+          </div>
+
+          <div class="form-group">
+            <label for="editDepartment">Department *</label>
+            <select id="editDepartment" class="form-input" required>
+              <option value="">Select department</option>
+              <option value="Networking">Networking</option>
+              <option value="Web Development">Web Development</option>
+              <option value="Systems Administration">Systems Administration</option>
+              <option value="Cybersecurity">Cybersecurity</option>
+              <option value="Data Analysis">Data Analysis</option>
+              <option value="Software Engineering">Software Engineering</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editStartDate">Start Date *</label>
+            <input type="date" id="editStartDate" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editEndDate">End Date *</label>
+            <input type="date" id="editEndDate" class="form-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="editMentor">Mentor</label>
+            <input type="text" id="editMentor" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label for="editStatus">Status *</label>
+            <select id="editStatus" class="form-input" required>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="editSkills">Skills *</label>
+          <textarea id="editSkills" class="form-input" rows="3" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="editNotes">Notes</label>
+          <textarea id="editNotes" class="form-input" rows="3"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/intern-management.js"></script>
+  <script src="js/theme.js"></script>
+</body>
+</html>
