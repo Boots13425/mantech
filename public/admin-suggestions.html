@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MANTech - Suggestions Management</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/admin-suggestions.css" />
+</head>
+<body>
+  <div class="suggestions-admin-container">
+    <div class="page-header">
+      <button class="back-btn" onclick="window.location.href='dashboard.html'">
+        <span>← Back to Dashboard</span>
+      </button>
+      <div>
+        <h1>Suggestions</h1>
+        <p>View anonymous suggestions submitted from the attendance page.</p>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div>
+        <span class="summary-label">Total suggestions</span>
+        <strong id="totalSuggestions">0</strong>
+      </div>
+      <button class="refresh-btn" onclick="loadSuggestions()">Refresh</button>
+    </div>
+
+    <div id="stateMessage" class="state-card">Loading suggestions...</div>
+
+    <div id="suggestionsList" class="suggestions-list" style="display: none;"></div>
+  </div>
+
+  <script src="js/admin-suggestions.js"></script>
+</body>
+</html>

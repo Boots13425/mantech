@@ -45,6 +45,7 @@ const exportRouter = require("./routes/export")
 const backupsRouter = require("./routes/backups")
 const groupRouter = require("./routes/group-management")
 const internManagementRouter = require("./routes/intern-management")
+const suggestionsRouter = require("./routes/suggestions")
 
 
 app.use("/api", internRegistrationRouter)
@@ -59,6 +60,7 @@ app.use('/api/export', exportRouter)
 app.use('/api/backups', backupsRouter)
 app.use("/api/groups", groupRouter)
 app.use("/api/interns", internManagementRouter)
+app.use("/api/suggestions", suggestionsRouter)
 
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
